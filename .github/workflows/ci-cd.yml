@@ -1,0 +1,310 @@
+
+# ==========================================================
+# EMPLOYEE MANAGEMENT - CI/CD PIPELINE
+# ==========================================================
+
+# Name, der in GitHub Actions angezeigt wird
+name: Employee Management CI/CD
+
+# ----------------------------------------------------------
+# 1. WORKFLOW TRIGGER
+# ----------------------------------------------------------
+# Legt fest, bei welchen Ereignissen die Pipeline startet.
+on:
+  # Startet bei Pushes auf main und ci-cd-pipeline.
+  push:
+    branches:
+      - main
+      - ci-cd-pipeline
+
+  # Startet bei Pull Requests mit Ziel main.
+  pull_request:
+    branches:
+      - main
+
+# ----------------------------------------------------------
+# 2. BERECHTIGUNGEN
+# ----------------------------------------------------------
+# Die Pipeline erhält nur die benötigten Leserechte.
+permissions:
+  contents: read
+  pull-requests: read
+
+# Verhindert unnötige parallele Ausführungen
+# für denselben Branch.
+concurrency:
+  group: employee-management-${{ github.ref }}
+  cancel-in-progress: true
+
+# ==========================================================
+# JOB 1: BACKEND TESTS
+# ==========================================================
+jobs:
+  backend-tests:
+    name: Backend Tests (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # Beide Backend-Services werden separat getestet.
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - employee-service
+          - auth-service
+
+    # ------------------------------------------------------
+    # MYSQL TESTDATENBANK
+    # ------------------------------------------------------
+    # GitHub startet für jede Backend-Testausführung
+    # einen eigenen MySQL-Container.
+    services:
+      mysql:
+        image: mysql:8.4
+
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+
+          # Employee-Service erhält seine eigene Datenbank.
+          # Auth-Service erhält ebenfalls eine eigene Datenbank.
+          MYSQL_DATABASE: ${{ matrix.service == 'employee-service' && 'people_hub' || 'people_hub_auth' }}
+
+          MYSQL_USER: ${{ matrix.service == 'employee-service' && 'peoplehub' || 'authuser' }}
+
+          MYSQL_PASSWORD: ${{ matrix.service == 'employee-service' && 'localAppPassword123!' || 'authDbPassword123!' }}
+
+        ports:
+          - 3306:3306
+
+        # Wartet, bis MySQL tatsächlich erreichbar ist.
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -prootpassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      # ----------------------------------------------------
+      # QUELLCODE HERUNTERLADEN
+      # ----------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ----------------------------------------------------
+      # JAVA INSTALLIEREN
+      # ----------------------------------------------------
+      # Java 21 wird für beide Spring-Boot-Projekte benötigt.
+      # Maven-Abhängigkeiten werden zwischengespeichert.
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # ----------------------------------------------------
+      # BACKEND TESTS AUSFÜHREN
+      # ----------------------------------------------------
+      - name: Run Maven tests
+        working-directory: ${{ matrix.service }}
+
+        env:
+          # Verbindung zur jeweiligen MySQL-Testdatenbank.
+          DB_URL: jdbc:mysql://127.0.0.1:3306/${{ matrix.service == 'employee-service' && 'people_hub' || 'people_hub_auth' }}
+
+          DB_USERNAME: ${{ matrix.service == 'employee-service' && 'peoplehub' || 'authuser' }}
+
+          DB_PASSWORD: ${{ matrix.service == 'employee-service' && 'localAppPassword123!' || 'authDbPassword123!' }}
+
+          # Temporärer JWT-Schlüssel für die Testumgebung.
+          JWT_SECRET: ci-test-secret-key-at-least-32-bytes-long
+
+          # Testzugangsdaten für den Auth-Service.
+          AUTH_ADMIN_EMAIL: ci-admin@example.com
+          AUTH_ADMIN_PASSWORD: Ci-Admin-Password-2026!
+
+        # Kompiliert das Backend und führt die Tests aus.
+        run: mvn -B -ntp test
+
+      # ----------------------------------------------------
+      # TESTBERICHTE SPEICHERN
+      # ----------------------------------------------------
+      # Die Berichte können später in GitHub heruntergeladen
+      # und analysiert werden.
+      - name: Upload backend test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.service }}-test-reports
+          path: |
+            ${{ matrix.service }}/target/surefire-reports/
+          if-no-files-found: ignore
+          retention-days: 14
+
+# ==========================================================
+# JOB 2: FRONTEND BUILD UND SECURITY CHECK
+# ==========================================================
+  frontend-build:
+    name: Frontend Build & Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      # Quellcode herunterladen.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Node.js in der vom Projekt benötigten Version installieren.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: npm
+          cache-dependency-path: employee-frontend/package-lock.json
+
+      # Abhängigkeiten exakt anhand der Lockdatei installieren.
+      - name: Install frontend dependencies
+        working-directory: employee-frontend
+        run: npm ci
+
+      # Prüft npm-Abhängigkeiten auf bekannte Sicherheitslücken.
+      # Bei schwerwiegenden Sicherheitslücken schlägt der Job fehl.
+      - name: Audit npm dependencies
+        working-directory: employee-frontend
+        run: npm audit --audit-level=high
+
+      # Erstellt den produktiven Angular-Build.
+      - name: Build Angular application
+        working-directory: employee-frontend
+        run: npm run build -- --configuration production
+
+      # Speichert das erstellte Frontend als Pipeline-Artefakt.
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: angular-production-build
+          path: employee-frontend/dist/
+          retention-days: 14
+
+# ==========================================================
+# JOB 3: DEPENDENCY SECURITY REVIEW
+# ==========================================================
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # Dieser Job ist nur bei Pull Requests relevant.
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Vergleicht Abhängigkeiten des Pull Requests
+      # mit der GitHub Advisory Database.
+      - name: Review dependencies
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+# ==========================================================
+# JOB 4: DOCKER BUILD UND INTEGRATION
+# ==========================================================
+  docker-integration:
+    name: Docker Build & Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    # Dieser Job startet nur, wenn beide Jobs erfolgreich sind.
+    needs:
+      - backend-tests
+      - frontend-build
+
+    steps:
+      # Quellcode herunterladen.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Docker Buildx bereitstellen.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ----------------------------------------------------
+      # DOCKER COMPOSE: GESAMTSYSTEM STARTEN
+      # ----------------------------------------------------
+      - name: Build and start application
+        env:
+          # Temporäre Zugangsdaten für Employee-MySQL.
+          EMPLOYEE_MYSQL_ROOT_PASSWORD: ci-employee-root
+          EMPLOYEE_DB_USER: peoplehub
+          EMPLOYEE_DB_PASSWORD: ci-employee-password
+
+          # Temporäre Zugangsdaten für Auth-MySQL.
+          AUTH_MYSQL_ROOT_PASSWORD: ci-auth-root
+          AUTH_DB_USER: authuser
+          AUTH_DB_PASSWORD: ci-auth-password
+
+          # Test-JWT-Schlüssel.
+          JWT_SECRET: ci-test-secret-key-at-least-32-bytes-long
+
+          # Temporärer Administrator für Auth-Service.
+          AUTH_ADMIN_EMAIL: ci-admin@example.com
+          AUTH_ADMIN_PASSWORD: Ci-Admin-Password-2026!
+
+        # Baut die Images und startet alle Services
+        # aus der vorhandenen docker-compose.yml.
+        run: docker compose up -d --build
+
+      # ----------------------------------------------------
+      # EMPLOYEE-SERVICE HEALTH CHECK
+      # ----------------------------------------------------
+      # Prüft, ob der Employee-Service erreichbar ist.
+      - name: Check employee service
+        run: |
+          curl --fail --silent --show-error \
+            --retry 30 \
+            --retry-connrefused \
+            --retry-delay 5 \
+            http://127.0.0.1:8081/actuator/health
+
+      # ----------------------------------------------------
+      # AUTH-SERVICE HEALTH CHECK
+      # ----------------------------------------------------
+      # Prüft, ob der Auth-Service erreichbar ist.
+      - name: Check auth service
+        run: |
+          curl --fail --silent --show-error \
+            --retry 30 \
+            --retry-connrefused \
+            --retry-delay 5 \
+            http://127.0.0.1:8082/actuator/health
+
+      # ----------------------------------------------------
+      # FRONTEND HEALTH CHECK
+      # ----------------------------------------------------
+      # Prüft, ob Angular über Nginx ausgeliefert wird.
+      - name: Check frontend
+        run: |
+          curl --fail --silent --show-error \
+            --retry 20 \
+            --retry-connrefused \
+            --retry-delay 5 \
+            http://127.0.0.1:4200/
+
+      # ----------------------------------------------------
+      # FEHLERANALYSE
+      # ----------------------------------------------------
+      # Bei Fehlern werden die Logs aller Container angezeigt.
+      - name: Show Docker logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      # ----------------------------------------------------
+      # AUFRÄUMEN
+      # ----------------------------------------------------
+      # Beendet die Container und entfernt die temporären
+      # Datenbank-Volumes nach dem Integrationstest.
+      - name: Stop and clean up containers
+        if: always()
+        run: docker compose down --volumes --remove-orphans
