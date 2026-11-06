@@ -1,0 +1,89 @@
+
+# NetworkPolicies für die MySQL-Datenbanken.
+#
+# Sicherheitsziel:
+# - Employee MySQL akzeptiert Verbindungen ausschließlich vom Employee Service.
+# - Auth MySQL akzeptiert Verbindungen ausschließlich vom Auth Service.
+# - Beide Datenbanken verwenden TCP-Port 3306.
+# - Ausgehender Netzwerkverkehr der Datenbank-Pods bleibt uneingeschränkt.
+#
+# Durch getrennte Policies erhält jeder Backend-Dienst nur Zugriff
+# auf die jeweils benötigte Datenbank.
+#
+# Die Kombination aus namespaceSelector und podSelector innerhalb
+# desselben from-Eintrags bedeutet, dass beide Selektoren erfüllt
+# sein müssen (UND-Verknüpfung).
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  # Erlaubt dem Employee Service den Zugriff auf Employee MySQL.
+  name: employee-mysql-allow-employee-service
+  namespace: employee-database
+
+spec:
+  # Die Policy gilt ausschließlich für den Employee-MySQL-Pod.
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: employee-mysql
+
+  # Ausschließlich eingehender Netzwerkverkehr wird eingeschränkt.
+  policyTypes:
+    - Ingress
+
+  ingress:
+    - from:
+        # Zulässig ist ausschließlich der Employee Service
+        # im Namespace employee-backend.
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: employee-backend
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: employee-service
+              app.kubernetes.io/component: backend
+              app.kubernetes.io/part-of: employee-management
+
+      # MySQL-Verbindungen verwenden TCP-Port 3306.
+      ports:
+        - protocol: TCP
+          port: 3306
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  # Erlaubt dem Auth Service den Zugriff auf Auth MySQL.
+  name: auth-mysql-allow-auth-service
+  namespace: employee-database
+
+spec:
+  # Die Policy gilt ausschließlich für den Auth-MySQL-Pod.
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: auth-mysql
+
+  # Ausschließlich eingehender Netzwerkverkehr wird eingeschränkt.
+  policyTypes:
+    - Ingress
+
+  ingress:
+    - from:
+        # Zulässig ist ausschließlich der Auth Service
+        # im Namespace employee-backend.
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: employee-backend
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: auth-service
+              app.kubernetes.io/component: backend
+              app.kubernetes.io/part-of: employee-management
+
+      # MySQL-Verbindungen verwenden TCP-Port 3306.
+      ports:
+        - protocol: TCP
+          port: 3306

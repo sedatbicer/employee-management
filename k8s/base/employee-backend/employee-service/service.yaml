@@ -1,0 +1,52 @@
+
+# =============================================================================
+# Employee Management - Employee Service
+# =============================================================================
+#
+# Zweck:
+# Dieser Kubernetes Service stellt eine stabile Netzwerkadresse für den
+# Employee-Service bereit.
+#
+# Architektur:
+# - Namespace: employee-backend
+# - Service-Typ: ClusterIP
+# - Service-Port: 8081
+# - Ziel-Port: 8081 (Spring Boot)
+#
+# Funktionsweise:
+# Der Service leitet eingehende Verbindungen an die Employee-Service-Pods
+# weiter. Die Zuordnung erfolgt anhand der definierten Labels.
+#
+# DNS:
+# employee-service.employee-backend.svc.cluster.local
+#
+# Wichtige Hinweise:
+# - Der Service ist innerhalb des Kubernetes-Clusters erreichbar.
+# - Die zugehörigen Pods werden später über ein Deployment bereitgestellt.
+# - Der Service kann bereits vor dem Start der Pods erstellt werden.
+#
+# =============================================================================
+
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: employee-service
+  namespace: employee-backend
+  labels:
+    app.kubernetes.io/name: employee-service
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: employee-management
+
+spec:
+  type: ClusterIP
+
+  # Verknüpfung mit den Employee-Service-Pods.
+  selector:
+    app.kubernetes.io/name: employee-service
+
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8081
+      targetPort: http

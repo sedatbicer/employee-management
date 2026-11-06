@@ -1,0 +1,355 @@
+
+<section class="page-content">
+
+  <!--
+    Kopfbereich der Mitarbeiterübersicht.
+    Zeigt den Seitentitel, die Gesamtzahl aller Mitarbeiter
+    sowie – abhängig von der Benutzerrolle – die Aktion
+    zum Anlegen eines neuen Mitarbeiterdatensatzes an.
+  -->
+  <div class="page-heading">
+
+    <div>
+      <div class="eyebrow">
+        <span class="eyebrow-dot"></span>
+        PEOPLE OPERATIONS
+      </div>
+
+      <h1>
+        Mitarbeiter
+        <span class="heading-count">{{ employees().length }}</span>
+      </h1>
+
+      <p>
+        Verwalte dein Team und behalte alle wichtigen Informationen im Blick.
+      </p>
+    </div>
+
+    <!-- Die Schaltfläche zum Anlegen neuer Mitarbeiter ist ausschließlich für Administratoren sichtbar. -->
+    @if (isAdmin()) {
+      <button
+        class="primary-button"
+        type="button"
+        (click)="openCreate()">
+
+        <span class="plus">＋</span>
+        Mitarbeiter hinzufügen
+      </button>
+    }
+
+  </div>
+
+  <!--
+    Statistischer Übersichtsbereich mit den wichtigsten Kennzahlen
+    des Unternehmens. Die Werte werden dynamisch aus den Mitarbeiter-
+    und Abteilungsdaten ermittelt.
+  -->
+  <div class="stats-grid">
+
+    <!-- Gesamtzahl aller im System vorhandenen Mitarbeiterdatensätze. -->
+    <article class="stat-card">
+      <div class="stat-top">
+        <span class="stat-label">MITARBEITER GESAMT</span>
+        <span class="stat-icon icon-blue">♙</span>
+      </div>
+
+      <div class="stat-value">
+        {{ employees().length }}
+        <span class="stat-unit">Personen</span>
+      </div>
+
+      <div class="stat-foot">
+        <span class="trend positive">↗ Teamübersicht</span>
+        <span>Alle Datensätze</span>
+      </div>
+
+      <div class="stat-decoration decor-blue"></div>
+    </article>
+
+    <!-- Anzahl und prozentualer Anteil der aktuell aktiven Mitarbeiter. -->
+    <article class="stat-card">
+      <div class="stat-top">
+        <span class="stat-label">AKTIVE MITARBEITER</span>
+        <span class="stat-icon icon-green">✓</span>
+      </div>
+
+      <div class="stat-value">
+        {{ activeCount() }}
+        <span class="stat-unit">aktiv</span>
+      </div>
+
+      <div class="stat-foot">
+        <span class="trend positive">● Im Team</span>
+
+        <span>
+          {{
+            employees().length
+              ? (activeCount() / employees().length * 100 | number:'1.0-0')
+              : 0
+          }}% der Belegschaft
+        </span>
+      </div>
+
+      <div class="stat-decoration decor-green"></div>
+    </article>
+
+    <!-- Übersicht der Mitarbeiter, deren aktueller Status Urlaub anzeigt. -->
+    <article class="stat-card">
+      <div class="stat-top">
+        <span class="stat-label">ABWESEND</span>
+        <span class="stat-icon icon-orange">◷</span>
+      </div>
+
+      <div class="stat-value">
+        {{ leaveCount() }}
+        <span class="stat-unit">im Urlaub</span>
+      </div>
+
+      <div class="stat-foot">
+        <span class="trend neutral">↗ Abwesenheiten</span>
+        <span>Aktueller Stand</span>
+      </div>
+
+      <div class="stat-decoration decor-orange"></div>
+    </article>
+
+    <!-- Anzahl der unterschiedlichen Abteilungen innerhalb des Unternehmens. -->
+    <article class="stat-card">
+      <div class="stat-top">
+        <span class="stat-label">ABTEILUNGEN</span>
+        <span class="stat-icon icon-violet">▦</span>
+      </div>
+
+      <div class="stat-value">
+        {{ departmentCount() }}
+        <span class="stat-unit">Bereiche</span>
+      </div>
+
+      <div class="stat-foot">
+        <span class="trend violet">✦ Organisiert</span>
+        <span>Im Unternehmen</span>
+      </div>
+
+      <div class="stat-decoration decor-violet"></div>
+    </article>
+
+  </div>
+
+  <!--
+    Hauptbereich des Mitarbeiterverzeichnisses.
+    Enthält die Navigation, Such- und Filterfunktionen,
+    die Datentabelle sowie den Export der angezeigten Ergebnisse.
+  -->
+  <section class="directory-card">
+
+    <!-- Titelbereich des Verzeichnisses mit der Exportfunktion. -->
+    <div class="directory-heading">
+
+      <div>
+        <h2>Teamverzeichnis</h2>
+        <p>Alle Mitarbeiter und ihre aktuellen Informationen</p>
+      </div>
+
+      <!-- Exportiert die aktuell gefilterten Mitarbeiterdatensätze als CSV-Datei. -->
+      <button
+        class="secondary-button export-button"
+        type="button"
+        (click)="downloadCsv()">
+
+        ⇩
+        <span>CSV exportieren</span>
+      </button>
+
+    </div>
+
+    <!--
+      Register zur Umschaltung zwischen der vollständigen Mitarbeiterliste
+      und der Ansicht mit ausschließlich aktiven Mitarbeitern.
+      Die jeweiligen Zähler geben die Anzahl der Datensätze pro Ansicht an.
+    -->
+    <div class="directory-tabs">
+
+      <button
+        type="button"
+        [class.selected]="activeTab() === 'Alle Mitarbeiter'"
+        (click)="setTab('Alle Mitarbeiter')">
+
+        Alle Mitarbeiter
+        <span>{{ employees().length }}</span>
+      </button>
+
+      <button
+        type="button"
+        [class.selected]="activeTab() === 'Aktive Mitarbeiter'"
+        (click)="setTab('Aktive Mitarbeiter')">
+
+        Aktive Mitarbeiter
+        <span>{{ activeCount() }}</span>
+      </button>
+
+    </div>
+
+    <!--
+      Filterbereich für die gezielte Suche innerhalb des Mitarbeiterverzeichnisses.
+      Die Such- und Auswahlfelder aktualisieren die angezeigten Datensätze
+      entsprechend den gewählten Kriterien.
+    -->
+    <div class="filters-row">
+
+      <!-- Freitextsuche anhand von Mitarbeitername, E-Mail-Adresse oder Position. -->
+      <label class="search-box">
+        <span>⌕</span>
+
+        <input
+          type="search"
+          placeholder="Name, E-Mail oder Position suchen …"
+          aria-label="Mitarbeiter suchen"
+          [value]="searchTerm()"
+          (input)="onSearch($any($event.target).value)">
+      </label>
+
+      <!-- Auswahl einer bestimmten Abteilung zur Eingrenzung der Mitarbeiterliste. -->
+      <label class="filter-select">
+        <span>Abteilung</span>
+
+        <select
+          aria-label="Nach Abteilung filtern"
+          [value]="departmentFilter()"
+          (change)="onDepartment($any($event.target).value)">
+
+          @for (department of departments; track department) {
+            <option [value]="department">
+              {{ department }}
+            </option>
+          }
+
+        </select>
+      </label>
+
+      <!-- Filterung der Mitarbeiter anhand ihres aktuellen Beschäftigungsstatus. -->
+      <label class="filter-select status-filter">
+        <span>Status</span>
+
+        <select
+          aria-label="Nach Status filtern"
+          [value]="statusFilter()"
+          (change)="onStatus($any($event.target).value)">
+
+          @for (status of statuses; track status) {
+            <option [value]="status">
+              {{ status }}
+            </option>
+          }
+
+        </select>
+      </label>
+
+      <!-- Setzt sämtliche Such- und Filterkriterien auf ihre Standardwerte zurück. -->
+      <button
+        class="reset-button"
+        type="button"
+        (click)="
+          onSearch('');
+          onDepartment('Alle Abteilungen');
+          onStatus('Alle Status');
+          setTab('Alle Mitarbeiter')
+        ">
+
+        Zurücksetzen
+      </button>
+
+    </div>
+
+    <!-- Ladezustand während des Abrufs der Mitarbeiterdaten aus dem Backend. -->
+    @if (loading()) {
+      <div class="loading-message" role="status">
+        <span class="loading-spinner"></span>
+        Mitarbeiter werden geladen …
+      </div>
+    }
+
+    <!--
+      Fehlerbereich für fehlgeschlagene Datenabrufe.
+      Die angezeigte Fehlermeldung informiert über das Problem;
+      über die Schaltfläche kann der Ladevorgang erneut gestartet werden.
+    -->
+    @if (errorMessage()) {
+      <div class="error-message" role="alert">
+
+        <span>{{ errorMessage() }}</span>
+
+        <button
+          type="button"
+          class="retry-button"
+          (click)="loadEmployees()">
+
+          Erneut versuchen
+        </button>
+
+      </div>
+    }
+
+    <!--
+      Zentrale Datentabelle auf Basis von AG Grid.
+      Angezeigt werden ausschließlich die Mitarbeiter, die den aktuellen
+      Such- und Filterkriterien entsprechen. Doppelklick- und Klickereignisse
+      werden an die zugehörigen Methoden der Component weitergeleitet.
+    -->
+    <div class="grid-shell">
+
+      <ag-grid-angular
+        class="employee-grid"
+        [theme]="gridTheme"
+        [rowData]="filteredEmployees()"
+        [columnDefs]="columnDefs"
+        [defaultColDef]="defaultColDef"
+        [rowHeight]="rowHeight"
+        [gridOptions]="gridOptions"
+        (rowDoubleClicked)="onRowDoubleClicked($event.data)"
+        (cellClicked)="onCellClicked($event)">
+      </ag-grid-angular>
+
+    </div>
+
+    <!--
+      Tabellenfußzeile mit der Anzahl der aktuell sichtbaren Datensätze
+      im Verhältnis zur Gesamtzahl aller geladenen Mitarbeiter.
+    -->
+    <div class="grid-footer">
+
+      <span>
+        <strong>{{ filteredEmployees().length }}</strong>
+        von {{ employees().length }} Mitarbeitern
+      </span>
+
+      <span class="footer-hint">
+        <span class="live-dot"></span>
+        Daten aktuell
+      </span>
+
+    </div>
+
+  </section>
+
+  <!--
+    Fußbereich der Seite mit Copyright-Hinweis,
+    Produktbeschreibung und aktueller Anwendungsversion.
+  -->
+  <footer class="page-footer">
+    <span>© 2026 PeopleHub</span>
+    <span>Mit Sorgfalt für Menschen entwickelt <b>✦</b></span>
+    <span>Version 1.0.0</span>
+  </footer>
+
+</section>
+
+<!--
+  Temporäre Statusbenachrichtigung für Rückmeldungen zu ausgeführten Aktionen,
+  beispielsweise nach einem erfolgreichen CSV-Export oder einer Datenänderung.
+-->
+@if (toastMessage()) {
+  <div class="toast-message" role="status">
+    <span>✓</span>
+    {{ toastMessage() }}
+  </div>
+}

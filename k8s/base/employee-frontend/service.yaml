@@ -1,0 +1,50 @@
+# =============================================================================
+# Employee Management - Frontend Service
+# =============================================================================
+#
+# Zweck:
+# Dieser Service stellt eine stabile Netzwerkadresse für das Angular-Frontend
+# mit integriertem Nginx bereit.
+#
+# Architektur:
+# - Namespace: employee-frontend
+# - Service-Typ: ClusterIP
+# - Service-Port: 80
+# - Ziel-Port: 80 (Nginx im Frontend-Container)
+#
+# Funktionsweise:
+# Der Service leitet eingehende Verbindungen an die Frontend-Pods weiter.
+# Die Zuordnung erfolgt über den Label-Selector.
+#
+# Zugriff:
+# - Innerhalb des Clusters über den Kubernetes Service.
+# - Lokal über kubectl port-forward.
+# - Eine externe Bereitstellung erfolgt später über Ingress oder einen
+#   geeigneten Load Balancer.
+#
+# =============================================================================
+
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: employee-frontend
+  namespace: employee-frontend
+  labels:
+    app.kubernetes.io/name: employee-frontend
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: employee-management
+
+spec:
+  # Der Service ist nur innerhalb des Kubernetes-Clusters erreichbar.
+  type: ClusterIP
+
+  # Der Selector muss mit den Labels der Frontend-Pods übereinstimmen.
+  selector:
+    app.kubernetes.io/name: employee-frontend
+
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http

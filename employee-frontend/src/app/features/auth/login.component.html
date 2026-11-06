@@ -1,0 +1,136 @@
+<div class="login-page">
+
+  <div class="login-card">
+
+    <!-- Kopfbereich mit Anwendungskennzeichnung und Begrüßung. -->
+    <div class="login-header">
+
+      <div class="login-icon" aria-hidden="true">
+        EM
+      </div>
+
+      <h1>Mitarbeiterverwaltung</h1>
+
+      <p>
+        Bitte melde dich mit deinen Zugangsdaten an.
+      </p>
+
+    </div>
+
+    <!--
+      Das Formular verwendet Angular Forms mit Signal-basierter
+      Zustandsverwaltung. Die Validierung erfolgt zusätzlich
+      kontrolliert in der LoginComponent.
+    -->
+    <form
+      (ngSubmit)="onLogin()"
+      novalidate
+      autocomplete="on"
+    >
+
+      <!-- E-Mail-Adresse -->
+      <div class="form-group">
+
+        <label for="email">
+          E-Mail-Adresse
+        </label>
+
+        <input
+          id="email"
+          type="email"
+          name="email"
+          placeholder="name@unternehmen.de"
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event)"
+          [class.invalid]="emailError()"
+          [attr.aria-invalid]="emailError() ? 'true' : 'false'"
+          [attr.aria-describedby]="emailError() ? 'email-error' : null"
+          autocomplete="username"
+          required
+          [disabled]="loading()"
+        />
+
+        @if (emailError()) {
+          <span
+            id="email-error"
+            class="field-error"
+            role="alert"
+          >
+            {{ emailError() }}
+          </span>
+        }
+
+      </div>
+
+      <!-- Passwort -->
+      <div class="form-group">
+
+        <label for="password">
+          Passwort
+        </label>
+
+        <input
+          id="password"
+          type="password"
+          name="password"
+          placeholder="Passwort eingeben"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+          [class.invalid]="passwordError()"
+          [attr.aria-invalid]="passwordError() ? 'true' : 'false'"
+          [attr.aria-describedby]="passwordError() ? 'password-error' : null"
+          autocomplete="current-password"
+          required
+          [disabled]="loading()"
+        />
+
+        @if (passwordError()) {
+          <span
+            id="password-error"
+            class="field-error"
+            role="alert"
+          >
+            {{ passwordError() }}
+          </span>
+        }
+
+      </div>
+
+      <!-- Allgemeine Fehlermeldung des Authentifizierungsvorgangs. -->
+      @if (errorMessage()) {
+
+        <div
+          class="error-message"
+          role="alert"
+          aria-live="assertive"
+        >
+          {{ errorMessage() }}
+        </div>
+
+      }
+
+      <!-- Absenden des Login-Formulars. -->
+      <button
+        type="submit"
+        [disabled]="loading()"
+        [attr.aria-busy]="loading()"
+      >
+
+        @if (loading()) {
+          <span>Anmeldung läuft...</span>
+        } @else {
+          <span>Anmelden</span>
+        }
+
+      </button>
+
+    </form>
+
+    <!-- Fußbereich der Login-Karte. -->
+    <div class="login-footer">
+      Mitarbeiterverwaltung · Employee Management
+    </div>
+
+  </div>
+
+</div>

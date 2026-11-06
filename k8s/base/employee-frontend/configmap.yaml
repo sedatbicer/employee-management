@@ -1,0 +1,87 @@
+# =============================================================================
+# Employee Management - Frontend Nginx ConfigMap
+# =============================================================================
+#
+# Zweck:
+# Diese ConfigMap stellt die Kubernetes-spezifische Nginx-Konfiguration
+# für das Angular-Frontend bereit.
+#
+# Architektur:
+# - Namespace: employee-frontend
+# - Anwendung: Angular
+# - Webserver: Nginx (integriert im Frontend-Container)
+# - HTTP-Port: 80
+# - Konfigurationsdatei im Container: /etc/nginx/conf.d/default.conf
+#
+# Reverse-Proxy-Konfiguration:
+# - /api/employees -> Employee Service (Port 8081)
+# - /api/auth      -> Auth Service (Port 8082)
+#
+# Service Discovery:
+# Die Backend-Microservices befinden sich im Namespace employee-backend.
+# Für die Kommunikation werden vollständig qualifizierte Kubernetes-DNS-Namen
+# verwendet. Dadurch ist die Namensauflösung unabhängig vom Namespace des
+# aufrufenden Pods.
+#
+# Konfigurationsmanagement:
+# Die Nginx-Konfiguration wird bewusst außerhalb des Container-Images
+# verwaltet. Dadurch können umgebungsspezifische Konfigurationen angepasst
+# werden, ohne das Angular-Frontend neu bauen zu müssen.
+#
+# Bereitstellung:
+# Die ConfigMap wird im Frontend-Deployment als Volume eingebunden.
+# Die Datei default.conf ersetzt dabei die standardmäßige Nginx-Konfiguration.
+#
+# Betriebsverhalten:
+# Änderungen an der ConfigMap werden bei einer Volume-Einbindung grundsätzlich
+# im Container sichtbar. Nginx übernimmt sie jedoch nicht automatisch.
+# Ein Reload oder Neustart von Nginx ist erforderlich.
+#
+# Sicherheit:
+# Diese ConfigMap enthält ausschließlich nicht vertrauliche Einstellungen.
+# Zugangsdaten und andere sensible Informationen dürfen nicht hier abgelegt
+# werden. Dafür werden Kubernetes Secrets verwendet.
+#
+# Abhängigkeiten:
+# - Kubernetes Services: employee-service und auth-service
+# - Namespace: employee-backend
+# - Frontend Deployment: employee-frontend
+#
+# =============================================================================
+
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: employee-frontend-nginx-config
+  namespace: employee-frontend
+  labels:
+    app.kubernetes.io/name: employee-frontend
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: employee-management
+
+data:
+  default.conf: |
+    server {
+        listen 80;
+        server_name _;
+
+        root /usr/share/nginx/html;
+        index index.html;
+
+        location /api/employees {
+            proxy_pass http://employee-service.employee-backend.svc.cluster.local:8081;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location /api/auth {
+            proxy_pass http://auth-service.employee-backend.svc.cluster.local:8082;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+    }

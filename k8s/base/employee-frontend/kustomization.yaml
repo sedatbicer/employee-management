@@ -1,0 +1,15 @@
+
+# Kustomize-Konfiguration für das Employee-Frontend.
+#
+# Diese Datei fasst alle Kubernetes-Ressourcen des Frontends zusammen.
+# Die einzelnen Manifeste bleiben eigenständige YAML-Dateien.
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Kubernetes-Manifeste, die zum Frontend gehören.
+resources:
+  - configmap.yaml
+  - service.yaml
+  - deployment.yaml
+  - network-policy.yaml

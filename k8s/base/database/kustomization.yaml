@@ -1,0 +1,21 @@
+
+# Zentrale Kustomize-Konfiguration für die Datenbank-Ebene.
+#
+# Fasst beide MySQL-Datenbanken und ihre gemeinsamen NetworkPolicies
+# zusammen:
+# - Auth MySQL
+# - Employee MySQL
+# - Datenbank-NetworkPolicies
+#
+# Beide Datenbanken werden über ihre eigenen
+# kustomization.yaml-Dateien eingebunden.
+#
+# Die PersistentVolumeClaims und StatefulSets bleiben unverändert.
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - auth-mysql/
+  - employee-mysql/
+  - network-policy.yaml

@@ -1,0 +1,167 @@
+
+# =============================================================================
+# Employee Management - Employee MySQL StatefulSet
+# =============================================================================
+#
+# Zweck:
+# Stellt die relationale Datenbank des Employee Service innerhalb des
+# Kubernetes-Clusters bereit.
+#
+# Architektur:
+# - Workload-Typ: StatefulSet
+# - Namespace: employee-database
+# - Datenbank-Image: mysql:8.4
+# - Datenbankname: people_hub
+# - Netzwerkzugriff: interner ClusterIP-Service employee-mysql
+# - Service-Port: 3306/TCP
+# - Replikate: 1 (Single-Instance-Betrieb)
+#
+# Konfiguration:
+# - Datenbankzugangsdaten werden über Kubernetes Secrets injiziert.
+# - Die Datenbank wird über Umgebungsvariablen initial konfiguriert.
+# - Ressourcenanforderungen und -limits begrenzen den Containerverbrauch.
+#
+# Persistenz:
+# - PersistentVolumeClaim: employee-mysql-data
+# - Mount-Pfad: /var/lib/mysql
+# - Die Daten bleiben unabhängig vom Lebenszyklus des Pods erhalten.
+#
+# Sicherheit:
+# - Keine Zugangsdaten sind direkt im Manifest hinterlegt.
+# - Zugangsdaten werden aus employee-mysql-credentials referenziert.
+# - Der Datenbankzugriff erfolgt ausschließlich innerhalb des Clusters.
+#
+# Health Monitoring:
+# - Startup Probe: überwacht den initialen Start der Datenbank.
+# - Readiness Probe: prüft die Bereitschaft zur Verarbeitung von Anfragen.
+# - Liveness Probe: erkennt nicht mehr funktionsfähige Datenbankprozesse.
+#
+# Betriebshinweise:
+# - Das StatefulSet gewährleistet eine stabile Pod-Identität.
+# - Der Service stellt einen stabilen Netzwerkendpunkt bereit.
+# - Die PVC darf nicht unüberlegt gelöscht werden.
+# - Die Migration der bestehenden Daten erfolgt separat.
+#
+# =============================================================================
+
+apiVersion: apps/v1
+kind: StatefulSet
+
+metadata:
+  name: employee-mysql
+  namespace: employee-database
+  labels:
+    app.kubernetes.io/name: employee-mysql
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: employee-management
+
+spec:
+  # Verknüpft das StatefulSet mit dem internen Datenbank-Service.
+  serviceName: employee-mysql
+
+  # Eine MySQL-Instanz für den lokalen Kubernetes-Betrieb.
+  replicas: 1
+
+  # Legt fest, welche Pods zu diesem StatefulSet gehören.
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: employee-mysql
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: employee-mysql
+        app.kubernetes.io/component: database
+        app.kubernetes.io/part-of: employee-management
+
+    spec:
+      # Gibt MySQL ausreichend Zeit für ein kontrolliertes Herunterfahren.
+      terminationGracePeriodSeconds: 60
+
+      containers:
+        - name: mysql
+          image: mysql:8.4
+          imagePullPolicy: IfNotPresent
+
+          # Interner Datenbank-Port.
+          ports:
+            - name: mysql
+              containerPort: 3306
+              protocol: TCP
+
+          # Initialisierung und Zugangsdaten der Datenbank.
+          env:
+            - name: MYSQL_DATABASE
+              value: people_hub
+
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: employee-mysql-credentials
+                  key: MYSQL_ROOT_PASSWORD
+
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: employee-mysql-credentials
+                  key: MYSQL_USER
+
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: employee-mysql-credentials
+                  key: MYSQL_PASSWORD
+
+          # Bindet den persistenten Speicher in den MySQL-Datenbankcontainer ein.
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+
+          # Überwacht den initialen Start von MySQL.
+          # Während dieser Phase werden die anderen Probes zurückgestellt.
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - 'mysqladmin ping -h 127.0.0.1 -u root -p"$MYSQL_ROOT_PASSWORD"'
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 60
+
+          # Prüft, ob MySQL bereit ist, Datenbankanfragen entgegenzunehmen.
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - 'mysqladmin ping -h 127.0.0.1 -u root -p"$MYSQL_ROOT_PASSWORD"'
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 6
+
+          # Erkennt dauerhaft nicht mehr funktionsfähige MySQL-Prozesse.
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - 'mysqladmin ping -h 127.0.0.1 -u root -p"$MYSQL_ROOT_PASSWORD"'
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+
+          # Definiert die angeforderten und maximal verfügbaren Ressourcen.
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+
+      # Verwendet den zuvor erstellten PersistentVolumeClaim.
+      volumes:
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: employee-mysql-data

@@ -1,0 +1,437 @@
+
+/* Grundlegende Eigenschaften der Sidebar-Komponente. */
+:host {
+  display: block;
+  flex: 0 0 260px;
+}
+
+/* Hauptcontainer der seitlichen Navigation. */
+.sidebar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+
+  display: flex;
+  flex-direction: column;
+
+  width: 260px;
+  height: 100vh;
+  min-height: 560px;
+
+  padding: 28px 16px 18px;
+
+  box-sizing: border-box;
+
+  overflow-y: auto;
+
+  background: #17233b;
+  color: #aeb9ce;
+}
+
+/* Markenbereich mit Logo und Produktbezeichnung. */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 0 10px 42px;
+}
+
+/* Grafisches Logo mit drei vertikalen Balken. */
+.brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+
+  flex: 0 0 38px;
+
+  width: 38px;
+  height: 38px;
+
+  border-radius: 11px;
+
+  background: #4d6ce3;
+
+  transform: rotate(-7deg);
+
+  span {
+    width: 4px;
+    height: 13px;
+
+    border-radius: 4px;
+    background: #fff;
+
+    &:nth-child(2) {
+      height: 20px;
+    }
+
+    &:nth-child(3) {
+      height: 9px;
+    }
+  }
+}
+
+/* Produktname und Markenbeschreibung. */
+.brand-info {
+  min-width: 0;
+
+  strong {
+    display: block;
+
+    color: #fff;
+    font-size: 21px;
+    font-weight: 750;
+    letter-spacing: -0.8px;
+
+    span {
+      color: #8ca6ff;
+    }
+  }
+
+  small {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #7887a5;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+  }
+}
+
+/* Hauptbereich der Navigation. */
+.navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* Überschrift des Navigationsbereichs. */
+.navigation-label {
+  margin: 0 12px 10px;
+
+  color: #7887a5;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 1.7px;
+}
+
+/* Allgemeine Gestaltung der Navigationseinträge. */
+.nav-item {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  gap: 13px;
+
+  min-height: 46px;
+  padding: 0 13px;
+
+  border-radius: 9px;
+
+  background: transparent;
+
+  color: #aeb9ce;
+  font-size: 12px;
+  font-weight: 500;
+
+  text-decoration: none;
+
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+
+  &:hover {
+    background: #202e4b;
+    color: #fff;
+  }
+
+  /* Hervorhebung des aktuell aktiven Navigationsbereichs. */
+  &.active {
+    background: #314675;
+    color: #fff;
+
+    box-shadow: inset 3px 0 #8298ff;
+
+    .nav-icon {
+      color: #a9baff;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid #8ca6ff;
+    outline-offset: 3px;
+  }
+}
+
+/* Einheitliche Gestaltung der Navigationssymbole. */
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 20px;
+
+  width: 20px;
+  height: 20px;
+
+  color: #91a0ba;
+
+  transition: color 160ms ease;
+
+  svg {
+    width: 19px;
+    height: 19px;
+  }
+}
+
+/* Bezeichnung des Navigationseintrags. */
+.nav-text {
+  flex: 1;
+}
+
+/* Dynamische Mitarbeiteranzahl. */
+.nav-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 23px;
+  height: 21px;
+
+  padding: 0 6px;
+
+  border-radius: 6px;
+
+  background: #405b9e;
+
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* Unterer Bereich der Sidebar. */
+.sidebar-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  margin-top: auto;
+  padding-top: 30px;
+}
+
+/* Informationskarte im unteren Sidebar-Bereich. */
+.help-card {
+  padding: 16px;
+
+  border: 1px solid #2b3a58;
+  border-radius: 12px;
+
+  background: #202e4a;
+
+  strong {
+    display: block;
+
+    margin-top: 11px;
+
+    color: #f1f4fb;
+    font-size: 12px;
+    font-weight: 650;
+  }
+
+  p {
+    margin: 6px 0 12px;
+
+    color: #91a0ba;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+}
+
+/* Dekoratives Symbol innerhalb der Informationskarte. */
+.help-icon {
+  display: grid;
+  place-items: center;
+
+  width: 29px;
+  height: 29px;
+
+  border-radius: 8px;
+
+  background: #344b80;
+
+  color: #b8c7ff;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Kleine Beschriftung der Informationskarte. */
+.help-caption {
+  color: #8295bb;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+
+/* Benutzerbereich am unteren Rand der Sidebar. */
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  min-width: 0;
+
+  padding: 16px 3px 0;
+
+  border-top: 1px solid #2b3851;
+}
+
+/* Avatar des angemeldeten Benutzers. */
+.user-avatar {
+  display: grid;
+  place-items: center;
+
+  flex: 0 0 36px;
+
+  width: 36px;
+  height: 36px;
+
+  border-radius: 10px;
+
+  background: #e5eaff;
+
+  color: #3f59b4;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* Benutzerinformationen. */
+.user-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+
+  min-width: 0;
+
+  strong {
+    overflow: hidden;
+
+    color: #eef2fa;
+    font-size: 10px;
+    font-weight: 650;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span {
+    color: #8493ad;
+    font-size: 9px;
+  }
+}
+
+/* Abmeldebutton im Benutzerbereich. */
+.logout-button {
+  display: grid;
+  place-items: center;
+
+  flex: 0 0 32px;
+
+  width: 32px;
+  height: 32px;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: #8493ad;
+
+  cursor: pointer;
+
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: #293957;
+    color: #fff;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #8ca6ff;
+    outline-offset: 2px;
+  }
+}
+
+/* Hintergrund zum Schließen der mobilen Navigation. */
+.backdrop {
+  display: none;
+}
+
+/* Responsive Darstellung für Smartphones und Tablets. */
+@media (max-width: 760px) {
+  :host {
+    flex: initial;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 30;
+
+    width: 260px;
+    height: 100vh;
+    min-height: 100vh;
+
+    box-shadow: 12px 0 35px #17233b22;
+
+    transform: translateX(-105%);
+
+    transition: transform 220ms ease;
+
+    &.open {
+      transform: translateX(0);
+    }
+  }
+
+  /* Halbtransparenter Hintergrund hinter der geöffneten Sidebar. */
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    border: 0;
+
+    background: #101a2d66;
+  }
+}
+
+/* Reduziert Animationen bei entsprechender Systemeinstellung. */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .nav-item,
+  .nav-icon,
+  .logout-button {
+    transition: none;
+  }
+}

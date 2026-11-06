@@ -1,0 +1,116 @@
+
+# =============================================================================
+# Employee Management - Frontend Deployment
+# =============================================================================
+#
+# Zweck:
+# Dieses Deployment stellt das Angular-Frontend bereit.
+# Die Angular-Anwendung wird innerhalb desselben Containers durch Nginx
+# ausgeliefert. Nginx übernimmt zusätzlich das Reverse Proxying der
+# REST-API-Anfragen an die Backend-Microservices.
+#
+# Architektur:
+# - Namespace: employee-frontend
+# - Container: Angular + Nginx
+# - HTTP-Port: 80
+# - Backend-Kommunikation: Kubernetes Service DNS
+#
+# Betrieb:
+# Kubernetes stellt durch das Deployment sicher, dass die gewünschte Anzahl
+# an Frontend-Pods verfügbar bleibt. Bei einem Ausfall eines Pods wird
+# automatisch ein Ersatz-Pod erstellt.
+#
+# Image:
+# Das Image wird zunächst lokal für Docker Desktop gebaut.
+# Für die spätere Bereitstellung in AWS EKS wird ein Image aus einer
+# Container Registry verwendet.
+#
+# Konfigurationsmanagement:
+# Die Nginx-Konfiguration wird getrennt vom Container-Image über eine
+# Kubernetes ConfigMap bereitgestellt.
+# Dadurch kann die Konfiguration angepasst werden, ohne das Angular-Frontend
+# erneut bauen zu müssen.
+#
+# Ressourcenmanagement:
+# CPU- und Arbeitsspeicheranforderungen sowie deren Obergrenzen werden
+# explizit definiert. Dadurch kann Kubernetes die Ressourcen des Containers
+# bei der Pod-Platzierung berücksichtigen und den Verbrauch begrenzen.
+#
+# Wichtige Hinweise:
+# - Die Nginx-Konfiguration wird über eine ConfigMap eingebunden.
+# - Der Zugriff auf das Frontend erfolgt über einen Kubernetes Service.
+# - Die ConfigMap muss vor dem Deployment im Cluster vorhanden sein.
+# - Änderungen an der ConfigMap erfordern bei Verwendung von subPath
+#   einen Neustart des Deployments.
+#
+# =============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: employee-frontend
+  namespace: employee-frontend
+  labels:
+    app.kubernetes.io/name: employee-frontend
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: employee-management
+
+spec:
+  # Anzahl der gewünschten Frontend-Pods.
+  replicas: 1
+
+  # Kubernetes ordnet Pods anhand dieser Labels dem Deployment zu.
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: employee-frontend
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: employee-frontend
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/part-of: employee-management
+
+    spec:
+      containers:
+        - name: employee-frontend
+
+          # Lokales Image für die Entwicklungsumgebung.
+          # In AWS EKS wird später ein Registry-Image verwendet.
+          image: employee-frontend:1.0.0
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+
+          # Ressourcenmanagement:
+          # Requests definieren die Ressourcen, die Kubernetes bei der
+          # Platzierung des Pods mindestens berücksichtigen soll.
+          # Limits begrenzen den maximalen CPU- und Arbeitsspeicherverbrauch.
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+
+          # Einbindung der Nginx-Konfiguration aus der ConfigMap.
+          # Die Konfiguration wird schreibgeschützt bereitgestellt.
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+              readOnly: true
+
+      # Bereitstellung der ConfigMap als Volume.
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: employee-frontend-nginx-config
+            items:
+              - key: default.conf
+                path: default.conf

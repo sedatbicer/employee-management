@@ -1,0 +1,42 @@
+# =============================================================================
+# Employee Management - Employee MySQL PersistentVolumeClaim
+# =============================================================================
+#
+# Zweck:
+# Fordert persistenten Speicher für die Employee-MySQL-Datenbank an.
+#
+# Architektur:
+# - Namespace: employee-database
+# - StorageClass: standard
+# - Speichergröße: 2 GiB
+# - Zugriff: ReadWriteOnce
+#
+# Wichtige Hinweise:
+# - Die Daten bleiben bei einem Neustart des MySQL-Pods erhalten.
+# - Der Speicher wird dynamisch über die StorageClass bereitgestellt.
+# - Der PVC darf nicht unüberlegt gelöscht werden.
+#
+# =============================================================================
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+
+metadata:
+  name: employee-mysql-data
+  namespace: employee-database
+  labels:
+    app.kubernetes.io/name: employee-mysql
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: employee-management
+
+spec:
+  # Verwendet die Standard-StorageClass von Docker Desktop.
+  storageClassName: standard
+
+  # Der Speicher wird von einem einzelnen Node eingebunden.
+  accessModes:
+    - ReadWriteOnce
+
+  resources:
+    requests:
+      storage: 2Gi

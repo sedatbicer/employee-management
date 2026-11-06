@@ -1,0 +1,50 @@
+# =============================================================================
+# Employee Management - Auth MySQL Service
+# =============================================================================
+#
+# Zweck:
+# Stellt einen stabilen internen Netzwerkendpunkt für die Auth-MySQL-
+# Datenbank bereit.
+#
+# Architektur:
+# - Namespace: employee-database
+# - Service-Typ: ClusterIP (interne Cluster-Kommunikation)
+# - Service-Port: 3306/TCP
+# - Ziel-Port: mysql (Container-Port des MySQL-Pods)
+#
+# Pod-Zuordnung:
+# Der Service leitet eingehende Verbindungen an Pods weiter, deren Label
+# app.kubernetes.io/name den Wert auth-mysql besitzt.
+#
+# DNS:
+# auth-mysql.employee-database.svc.cluster.local
+#
+# Hinweise:
+# - Der Service ist ausschließlich innerhalb des Kubernetes-Clusters erreichbar.
+# - Die Datenbank-Pods werden unabhängig über ein Deployment verwaltet.
+# - Der Service kann bereits vor dem Start der Datenbank-Pods erstellt werden.
+#
+# =============================================================================
+
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: auth-mysql
+  namespace: employee-database
+  labels:
+    app.kubernetes.io/name: auth-mysql
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: employee-management
+
+spec:
+  type: ClusterIP
+
+  selector:
+    app.kubernetes.io/name: auth-mysql
+
+  ports:
+    - name: mysql
+      protocol: TCP
+      port: 3306
+      targetPort: mysql

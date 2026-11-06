@@ -1,0 +1,28 @@
+# Kustomize-Overlay für die spätere AWS-EKS-Umgebung.
+#
+# Dieses Overlay dient als Ausgangspunkt für die AWS-spezifische
+# Konfiguration des Employee-Management-Systems.
+#
+# Die gemeinsame Basis enthält:
+# - Angular-Frontend mit integriertem Nginx
+# - Employee Service und Auth Service
+# - Employee- und Auth-MySQL-Datenbank
+# - Kubernetes Services und NetworkPolicies
+#
+# AWS-spezifische Anpassungen werden schrittweise ergänzt:
+# - Container-Images aus Amazon ECR
+# - Persistenter Speicher über AWS EBS
+# - AWS Load Balancer und Ingress
+# - Sichere Verwaltung von Zugangsdaten
+#
+# WICHTIG:
+# Dieses Overlay ist zunächst nur ein Gerüst.
+# Es ist noch nicht für eine Bereitstellung auf EKS freigegeben.
+# Insbesondere lokale Image-Referenzen und Storage-Konfigurationen
+# müssen vor einem produktiven Einsatz angepasst werden.
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base

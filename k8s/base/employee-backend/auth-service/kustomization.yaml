@@ -1,0 +1,13 @@
+
+# Kustomize-Konfiguration für den Auth Service.
+#
+# Fasst Deployment und Service des Auth Service zusammen.
+# Die Konfiguration kann eigenständig oder über das Backend
+# eingebunden werden.
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yaml
+  - service.yaml

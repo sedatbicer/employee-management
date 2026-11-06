@@ -1,0 +1,86 @@
+# ============================================================
+# Umgebungsvariablen und vertrauliche Konfiguration
+# ============================================================
+# Lokale Umgebungsdateien enthalten häufig Zugangsdaten,
+# Datenbankpasswörter, JWT-Secrets und weitere Konfigurationswerte.
+.env
+.env.*
+!.env.example
+
+# Private Schlüssel, Zertifikate und lokale Secret-Dateien
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+secrets/
+**/secrets/
+
+# ============================================================
+# Datenbanken und Sicherungsdateien
+# ============================================================
+# Lokale Datenbank-Backups und exportierte Datenbestände
+# dürfen nicht Bestandteil des Quellcode-Repositories sein.
+backup/
+*.sql
+*.sql.gz
+*.dump
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================================================
+# Java / Maven
+# ============================================================
+# Generierte Build-Artefakte werden bei Bedarf reproduzierbar
+# durch Maven aus dem Quellcode erzeugt.
+**/target/
+
+# ============================================================
+# Angular / Node.js
+# ============================================================
+# Abhängigkeiten, Build-Ergebnisse und Angular-Caches werden
+# nicht versioniert, da sie aus den Projektdateien entstehen.
+**/node_modules/
+**/dist/
+**/.angular/
+**/out-tsc/
+
+# ============================================================
+# Entwicklungsumgebungen und IDE-Konfigurationen
+# ============================================================
+# Benutzer- und arbeitsplatzspezifische Einstellungen von IDEs
+# und Editoren gehören nicht zum gemeinsamen Projektstand.
+.idea/
+.vscode/
+*.iml
+
+# ============================================================
+# Temporäre Dateien und Protokolle
+# ============================================================
+# Lokale Laufzeitprotokolle, temporäre Dateien und Sicherungskopien
+*.log
+*.tmp
+*.bak
+
+# ============================================================
+# Betriebssystem-spezifische Dateien
+# ============================================================
+# Automatisch erzeugte Metadaten des jeweiligen Betriebssystems
+.DS_Store
+Thumbs.db
+
+# ============================================================
+# Generierte Build- und Testergebnisse
+# ============================================================
+# Automatisch erzeugte Build-Artefakte, Testergebnisse und
+# Coverage-Berichte werden nicht versioniert. Sie können bei
+# Bedarf jederzeit aus dem Quellcode neu erstellt werden.
+**/build/
+**/coverage/
+**/.nyc_output/
+**/test-results/
+**/playwright-report/
+**/allure-results/
+**/allure-report/

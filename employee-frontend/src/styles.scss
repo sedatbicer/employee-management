@@ -1,0 +1,227 @@
+/* ==========================================================
+   Globale Schriftart und grundlegende Anwendungseinstellungen
+   ========================================================== */
+
+/* Einbindung der Schriftart Inter von Google Fonts. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Globale Einstellungen für die gesamte Anwendung. */
+:root {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+
+  color: #34415a;
+  background: #f6f8fc;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
+}
+
+/* Einheitliches Box-Modell für alle HTML-Elemente. */
+* {
+  box-sizing: border-box;
+}
+
+/* Grundeinstellungen für HTML und Dokumentkörper. */
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+/* Mindestbreite der Anwendung. */
+body {
+  min-width: 320px;
+}
+
+/* Einheitliche Schriftart für Formularelemente und Schaltflächen. */
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+/* Sichtbare Fokusmarkierung für eine bessere Tastaturbedienbarkeit. */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #8195f3;
+  outline-offset: 2px;
+}
+
+/* Gestaltung markierter Textbereiche. */
+::selection {
+  background: #dfe6ff;
+  color: #233c9d;
+}
+
+/* ==========================================================
+   Mitarbeiterdarstellung innerhalb des AG Grid
+   ========================================================== */
+
+/* Container für Mitarbeiteravatar und persönliche Informationen. */
+.employee-cell {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  height: 100%;
+  min-width: 0;
+}
+
+/* Gemeinsame Gestaltung der Mitarbeiter-Avatare mit Initialen. */
+.employee-initials {
+  display: grid;
+  place-items: center;
+
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+
+  border-radius: 11px;
+
+  font-size: 10px;
+  font-weight: 800;
+}
+
+/* ==========================================================
+   Farbvarianten der Mitarbeiter-Avatare
+   ========================================================== */
+
+/* Blaue Avatarvariante. */
+.avatar-blue {
+  background: #e8eeff;
+  color: #526ed3;
+}
+
+/* Violette Avatarvariante. */
+.avatar-violet {
+  background: #f0e9ff;
+  color: #8c67cb;
+}
+
+/* Grüne Avatarvariante. */
+.avatar-green {
+  background: #e1f6ec;
+  color: #329775;
+}
+
+/* Orange Avatarvariante. */
+.avatar-orange {
+  background: #fff0df;
+  color: #c78134;
+}
+
+/* Rosa Avatarvariante. */
+.avatar-pink {
+  background: #ffebf1;
+  color: #c45b83;
+}
+
+/* ==========================================================
+   Mitarbeitername und E-Mail-Adresse
+   ========================================================== */
+
+/* Container für die persönlichen Mitarbeiterinformationen. */
+.employee-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+
+  min-width: 0;
+
+  line-height: 1;
+}
+
+/* Darstellung des Vor- und Nachnamens. */
+.employee-identity strong {
+  overflow: hidden;
+
+  color: #2b3850;
+  font-size: 11px;
+  font-weight: 700;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 12px;
+}
+
+/* Darstellung der E-Mail-Adresse. */
+.employee-identity small {
+  overflow: hidden;
+
+  color: #99a3b3;
+  font-size: 9px;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 10px;
+}
+
+/* ==========================================================
+   Mitarbeiterstatus
+   ========================================================== */
+
+/* Gemeinsame Gestaltung der Statusanzeigen. */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 5px 8px;
+
+  border-radius: 6px;
+
+  font-size: 9px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+/* Kleiner Statusindikator innerhalb der Statusanzeige. */
+.status-pill i {
+  width: 5px;
+  height: 5px;
+
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Status: Aktiv. */
+.status-aktiv {
+  color: #268b68;
+  background: #e6f7ef;
+}
+
+/* Status: Urlaub. */
+.status-urlaub {
+  color: #b87a25;
+  background: #fff3df;
+}
+
+/* Status: Inaktiv. */
+.status-inaktiv {
+  color: #8993a4;
+  background: #f0f2f6;
+}
+
+/* ==========================================================
+   Zusätzliche Hinweise innerhalb der Tabellenzeilen
+   ========================================================== */
+
+/* Dezenter Hinweis für verfügbare Zeilenaktionen. */
+.row-action-hint {
+  color: #9ba5b4;
+  font-size: 9px;
+
+  white-space: nowrap;
+}

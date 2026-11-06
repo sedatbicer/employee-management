@@ -1,0 +1,18 @@
+
+# Kustomize-Konfiguration für die Auth-MySQL-Datenbank.
+#
+# Fasst die drei Kubernetes-Ressourcen der Auth-Datenbank zusammen:
+# - PersistentVolumeClaim für dauerhafte Datenspeicherung
+# - Service für die interne Erreichbarkeit
+# - StatefulSet für den MySQL-Container
+#
+# Die bestehenden PVC- und StatefulSet-Konfigurationen
+# werden durch Kustomize nicht verändert.
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - pvc.yaml
+  - service.yaml
+  - statefulset.yaml

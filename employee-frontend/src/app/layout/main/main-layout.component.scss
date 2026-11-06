@@ -1,0 +1,52 @@
+/**
+ * Stylesheet für das zentrale Anwendungslayout.
+ *
+ * Definiert:
+ * - Grundstruktur der Anwendung.
+ * - Positionierung von Sidebar und Hauptbereich.
+ * - Gestaltung des dynamischen Inhaltsbereichs.
+ * - Responsives Verhalten für kleinere Bildschirmgrößen.
+ */
+
+/* Äußerer Container der gesamten Anwendung */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f6f8fc;
+}
+
+/* Hauptbereich rechts neben der Sidebar */
+.main-area {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+}
+
+/* Inhaltsbereich für die aktuell aufgerufene Seite */
+.page-content {
+  flex: 1;
+  min-width: 0;
+  padding: 24px;
+}
+
+/* Angepasste Darstellung für mobile Endgeräte */
+@media (max-width: 760px) {
+
+  /* Hauptcontainer wird auf mobilen Geräten untereinander angeordnet */
+  .app-shell {
+    display: block;
+  }
+
+  /* Hauptbereich nutzt die gesamte verfügbare Bildschirmbreite */
+  .main-area {
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  /* Reduzierter Innenabstand für kleinere Displays */
+  .page-content {
+    padding: 16px;
+  }
+}

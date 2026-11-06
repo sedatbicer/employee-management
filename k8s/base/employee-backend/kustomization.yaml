@@ -1,0 +1,21 @@
+
+# Zentrale Kustomize-Konfiguration für das Employee-Management-Backend.
+#
+# Fasst beide Backend-Dienste und die gemeinsamen Ressourcen zusammen:
+# - Auth Service
+# - Employee Service
+# - Gemeinsame Backend-ConfigMap
+# - Backend-NetworkPolicy
+#
+# Die einzelnen Services werden über ihre eigenen
+# kustomization.yaml-Dateien eingebunden.
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Ressourcen und Unterverzeichnisse des Backend-Bereichs.
+resources:
+  - configmap.yaml
+  - network-policy.yaml
+  - auth-service/
+  - employee-service/

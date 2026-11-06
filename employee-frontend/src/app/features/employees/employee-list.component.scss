@@ -1,0 +1,1028 @@
+
+/* =========================================================
+   GRUNDEINSTELLUNGEN UND SEITENLAYOUT
+   ========================================================= */
+
+/*
+ * Grundlegende Darstellung der Angular-Komponente.
+ * Durch display: block wird sichergestellt, dass die Komponente
+ * als eigenständiger Block im übergeordneten Layout erscheint.
+ * min-width: 0 verhindert unerwünschte horizontale Überläufe
+ * innerhalb von Flex- und Grid-Containern.
+ */
+:host {
+  display: block;
+  min-width: 0;
+}
+
+/*
+ * Zentraler Seitencontainer für die Mitarbeiterübersicht.
+ * Die maximale Breite begrenzt die Inhaltsdarstellung auf großen
+ * Bildschirmen und sorgt durch automatische Seitenränder
+ * für eine gleichmäßige horizontale Ausrichtung.
+ */
+.page-content {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 31px 34px 22px;
+}
+
+/*
+ * Anordnung des Seitenkopfes mit Überschrift und primärer Aktion.
+ * Flexbox richtet die Inhalte an der unteren Kante aus und verteilt
+ * den verfügbaren horizontalen Platz zwischen den Elementen.
+ */
+.page-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 27px;
+}
+
+/*
+ * Kleine Bereichskennzeichnung oberhalb der Hauptüberschrift.
+ * Buchstabenabstand, Schriftgewicht und dezente Farbgebung
+ * sorgen für eine klare visuelle Hierarchie.
+ */
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #7e8aa0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.65px;
+}
+
+/* Dekorativer Punkt als visuelle Kennzeichnung des Seitenbereichs. */
+.eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #718af1;
+}
+
+/*
+ * Gestaltung der Hauptüberschrift.
+ * Die kompakte Zeilenhöhe und der negative Buchstabenabstand
+ * sorgen für eine moderne und gut lesbare Darstellung.
+ */
+h1 {
+  margin: 10px 0 7px;
+  color: #1c2941;
+  font-size: 29px;
+  font-weight: 760;
+  letter-spacing: -1.05px;
+  line-height: 1.2;
+}
+
+/*
+ * Kompakte Zähleranzeige neben der Seitenüberschrift.
+ * CSS Grid zentriert die Mitarbeiteranzahl horizontal und vertikal.
+ */
+.heading-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 25px;
+  height: 22px;
+  margin-left: 7px;
+  padding: 3px 8px;
+  border-radius: 7px;
+  background: #edf1ff;
+  color: #4f67c4;
+  font-size: 11px;
+  vertical-align: middle;
+}
+
+/* Erläuternder Beschreibungstext unterhalb der Seitenüberschrift. */
+.page-heading p {
+  margin: 0;
+  color: #8a95a7;
+  font-size: 12px;
+}
+
+/* =========================================================
+   SCHALTFLÄCHEN
+   ========================================================= */
+
+/*
+ * Gemeinsame Grundgestaltung der primären und sekundären Aktionen.
+ * Inline-Flex sorgt für eine korrekte Ausrichtung von Symbolen
+ * und Beschriftungen. Übergänge verbessern die Rückmeldung
+ * bei Interaktionen mit den Schaltflächen.
+ */
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 11px 15px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s;
+}
+
+/*
+ * Primäre Aktionsschaltfläche zum Anlegen eines neuen Mitarbeiters.
+ * Die hervorgehobene Hintergrundfarbe und der dezente Schatten
+ * kennzeichnen die wichtigste Aktion des Seitenbereichs.
+ */
+.primary-button {
+  border: 1px solid #4e68d3;
+  background: #536fdf;
+  color: #fff;
+  box-shadow: 0 4px 10px #526de022;
+}
+
+/*
+ * Interaktionszustand der primären Schaltfläche.
+ * Beim Überfahren mit dem Mauszeiger wird die Hintergrundfarbe
+ * leicht abgedunkelt und die Schaltfläche dezent angehoben.
+ */
+.primary-button:hover {
+  background: #435dcb;
+  transform: translateY(-1px);
+}
+
+/*
+ * Sekundäre Schaltfläche für ergänzende Aktionen,
+ * beispielsweise den Export der Mitarbeiterdaten.
+ * Die neutrale Gestaltung stellt sicher, dass sie optisch
+ * hinter der primären Aktion bleibt.
+ */
+.secondary-button {
+  border: 1px solid #e2e7ef;
+  background: #fff;
+  color: #536078;
+}
+
+/* Dezente Hervorhebung der sekundären Aktion bei Mausinteraktion. */
+.secondary-button:hover {
+  background: #f7f9fc;
+}
+
+/* Typografische Ausrichtung des Pluszeichens in der Hinzufügen-Schaltfläche. */
+.plus {
+  font-size: 17px;
+  line-height: 10px;
+}
+
+/* =========================================================
+   STATISTIKKARTEN
+   ========================================================= */
+
+/*
+ * Rasterlayout für die vier statistischen Übersichtsbereiche.
+ * Die gleichmäßig verteilten Spalten passen sich der verfügbaren
+ * Breite an, ohne dass die einzelnen Karten zu schmal werden.
+ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 25px;
+}
+
+/*
+ * Grundgestaltung einer einzelnen Statistik-Karte.
+ * position: relative dient als Bezugspunkt für die dekorativen
+ * Hintergrundelemente. overflow: hidden verhindert, dass diese
+ * Elemente über die abgerundeten Kartengrenzen hinausragen.
+ */
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 133px;
+  padding: 19px 19px 16px;
+  border: 1px solid #e9edf4;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 2px 8px #20304a03;
+}
+
+/*
+ * Gemeinsame Ausrichtung der oberen Kartenzeile
+ * und der unteren Informationszeile.
+ * Die Elemente werden horizontal an gegenüberliegenden Seiten
+ * positioniert und behalten einen definierten Mindestabstand.
+ */
+.stat-top,
+.stat-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Bezeichnung der jeweiligen Kennzahl innerhalb einer Statistik-Karte. */
+.stat-label {
+  color: #8a95a7;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 1px;
+}
+
+/*
+ * Einheitliche Gestaltung der Statistik-Symbole.
+ * Das Grid-Layout zentriert die jeweiligen Zeichen innerhalb
+ * eines quadratischen Containers mit abgerundeten Ecken.
+ */
+.stat-icon {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  border-radius: 9px;
+  font-size: 17px;
+}
+
+/*
+ * Farbvarianten der Statistik-Symbole.
+ * Jede Kennzahl erhält eine eigene dezente Farbkombination,
+ * damit die unterschiedlichen Informationsbereiche
+ * visuell voneinander unterschieden werden können.
+ */
+.icon-blue { color: #5673df; background: #edf1ff; }
+.icon-green { color: #2a9b75; background: #e6f7ef; }
+.icon-orange { color: #d99035; background: #fff3df; }
+.icon-violet { color: #8b65ce; background: #f2eaff; }
+
+/*
+ * Darstellung des eigentlichen Kennzahlenwertes.
+ * Die erhöhte Positionierung stellt sicher, dass die Zahl
+ * über den dekorativen Hintergrundelementen sichtbar bleibt.
+ */
+.stat-value {
+  position: relative;
+  z-index: 1;
+  margin-top: 9px;
+  color: #1c2941;
+  font-size: 28px;
+  font-weight: 760;
+  letter-spacing: -0.9px;
+  line-height: 1.1;
+}
+
+/* Ergänzende Einheit neben dem numerischen Kennzahlenwert. */
+.stat-unit {
+  margin-left: 7px;
+  color: #8b96a8;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/*
+ * Unterer Informationsbereich einer Statistik-Karte.
+ * Die erhöhte Stapelpositionierung hält den Text vor den
+ * dekorativen Hintergrundelementen.
+ */
+.stat-foot {
+  position: relative;
+  z-index: 1;
+  gap: 6px;
+  margin-top: 13px;
+  color: #9aa4b4;
+  font-size: 9px;
+}
+
+/* Einheitliche Typografie für Trend- und Statushinweise. */
+.trend {
+  font-size: 9px;
+  font-weight: 700;
+}
+
+/* Farbkennzeichnungen der unterschiedlichen statistischen Hinweise. */
+.positive { color: #279d77; }
+.neutral { color: #d19039; }
+.violet { color: #8664c7; }
+
+/*
+ * Dekoratives Hintergrundelement der Statistik-Karten.
+ * Die absolute Positionierung, Rotation und Transparenz erzeugen
+ * eine dezente grafische Fläche im unteren rechten Kartenbereich.
+ */
+.stat-decoration {
+  position: absolute;
+  right: -24px;
+  bottom: -46px;
+  width: 108px;
+  height: 80px;
+  border-radius: 50%;
+  opacity: 0.4;
+  transform: rotate(-30deg);
+}
+
+/* Individuelle Hintergrundfarben passend zu den jeweiligen Kennzahlen. */
+.decor-blue { background: #eef2ff; }
+.decor-green { background: #e8f8ef; }
+.decor-orange { background: #fff4e4; }
+.decor-violet { background: #f4edff; }
+
+/* =========================================================
+   MITARBEITERVERZEICHNIS
+   ========================================================= */
+
+/*
+ * Äußerer Container des Mitarbeiterverzeichnisses.
+ * Die Begrenzung des Inhalts sorgt dafür, dass Tabellen-
+ * und Hintergrundelemente innerhalb der abgerundeten Karte bleiben.
+ */
+.directory-card {
+  overflow: hidden;
+  border: 1px solid #e8edf4;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 2px 10px #20304a04;
+}
+
+/*
+ * Kopfbereich des Verzeichnisses mit Titel, Beschreibung
+ * und der ergänzenden Exportfunktion.
+ */
+.directory-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 22px 23px 17px;
+}
+
+/* Überschrift des zentralen Mitarbeiterverzeichnisses. */
+.directory-heading h2 {
+  margin: 0;
+  color: #24314a;
+  font-size: 15px;
+  letter-spacing: -0.25px;
+}
+
+/* Erläuternder Untertitel zur Einordnung der Tabelleninhalte. */
+.directory-heading p {
+  margin: 6px 0 0;
+  color: #929daf;
+  font-size: 10px;
+}
+
+/*
+ * Größenanpassung der Export-Schaltfläche.
+ * Die kompakteren Innenabstände unterscheiden sie optisch
+ * von der primären Aktion zum Anlegen eines Mitarbeiters.
+ */
+.export-button {
+  padding: 9px 12px;
+  font-size: 11px;
+}
+
+/* =========================================================
+   TABS
+   ========================================================= */
+
+/*
+ * Navigationsbereich zur Umschaltung der Mitarbeiteransichten.
+ * Die untere Trennlinie grenzt die Navigation visuell
+ * vom nachfolgenden Such- und Filterbereich ab.
+ */
+.directory-tabs {
+  display: flex;
+  gap: 22px;
+  padding: 0 23px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+/*
+ * Grundgestaltung der einzelnen Register.
+ * Die transparente untere Rahmenlinie reserviert den Platz
+ * für die Hervorhebung des aktuell ausgewählten Registers.
+ */
+.directory-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 0 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #8b96a8;
+  font-size: 10px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+/*
+ * Aktiver Navigationszustand.
+ * Eine farbige Unterstreichung und die angepasste Textfarbe
+ * kennzeichnen die momentan ausgewählte Mitarbeiteransicht.
+ */
+.directory-tabs button.selected {
+  border-bottom-color: #6179e4;
+  color: #526bd2;
+}
+
+/*
+ * Kleine Zähleranzeige innerhalb eines Registers.
+ * Die Mindestbreite gewährleistet eine gleichmäßige Darstellung
+ * auch bei einstelligen Mitarbeiterzahlen.
+ */
+.directory-tabs button span {
+  display: inline-grid;
+  place-items: center;
+  min-width: 19px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 5px;
+  background: #f0f3f8;
+  font-size: 9px;
+}
+
+/* Farblich angepasste Zähleranzeige des aktuell ausgewählten Registers. */
+.directory-tabs button.selected span {
+  background: #edf1ff;
+  color: #4f68d0;
+}
+
+/* =========================================================
+   SUCHE UND FILTER
+   ========================================================= */
+
+/*
+ * Gemeinsamer Container für Freitextsuche, Auswahlfilter
+ * und die Funktion zum Zurücksetzen sämtlicher Filterkriterien.
+ * Die Elemente werden horizontal mit einheitlichen Abständen angeordnet.
+ */
+.filters-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 17px 22px;
+}
+
+/*
+ * Eingabebereich für die Freitextsuche.
+ * Das Suchfeld erhält den verbleibenden horizontalen Platz,
+ * während eine Mindestbreite die Bedienbarkeit sicherstellt.
+ */
+.search-box {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 180px;
+  height: 37px;
+  gap: 9px;
+  padding: 0 11px;
+  border: 1px solid #e5eaf2;
+  border-radius: 8px;
+  color: #8491a6;
+}
+
+/* Typografische Darstellung des Suchsymbols innerhalb des Eingabefeldes. */
+.search-box > span {
+  font-size: 22px;
+  line-height: 1;
+  transform: rotate(-20deg);
+}
+
+/*
+ * Eingabefeld der Freitextsuche.
+ * Die transparente Gestaltung integriert das Eingabefeld
+ * in den umgebenden Suchcontainer und verhindert doppelte Rahmen.
+ */
+.search-box input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #34415a;
+  font: inherit;
+  font-size: 10px;
+}
+
+/* Dezente Farbgebung des Platzhaltertextes im Suchfeld. */
+.search-box input::placeholder {
+  color: #a2acba;
+}
+
+/*
+ * Gemeinsame Gestaltung der Auswahlfelder für Abteilung und Status.
+ * Beschriftung und Auswahl werden horizontal angeordnet und
+ * durch einen dezenten Rahmen als zusammengehörige Filter dargestellt.
+ */
+.filter-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 37px;
+  padding: 0 10px;
+  border: 1px solid #e5eaf2;
+  border-radius: 8px;
+  color: #9aa4b4;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+/*
+ * Native Auswahlfelder innerhalb der Filtercontainer.
+ * Die Standardrahmen werden entfernt, damit die Auswahlfelder
+ * optisch in die gemeinsame Gestaltung integriert werden.
+ */
+.filter-select select {
+  max-width: 140px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #526078;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+/* Begrenzte Breite des Statusfilters für eine kompakte Darstellung. */
+.status-filter select { max-width: 100px; }
+
+/*
+ * Schaltfläche zum Zurücksetzen der Such- und Filtereinstellungen.
+ * Durch die transparente Gestaltung bleibt sie gegenüber
+ * den eigentlichen Filterfeldern optisch zurückhaltend.
+ */
+.reset-button {
+  border: 0;
+  background: transparent;
+  color: #7887a1;
+  font-size: 10px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Farbige Hervorhebung der Zurücksetzen-Funktion bei Mausinteraktion. */
+.reset-button:hover { color: #4d65cc; }
+
+/* =========================================================
+   LADE- UND FEHLERANZEIGEN
+   ========================================================= */
+
+/*
+ * Gemeinsame Grundgestaltung der Lade- und Fehlermeldungen.
+ * Flexbox richtet Text und gegebenenfalls ergänzende Aktionen
+ * innerhalb eines einheitlich gestalteten Hinweisbereichs aus.
+ */
+.loading-message,
+.error-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 22px 14px;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+/*
+ * Visuelle Kennzeichnung des laufenden Ladevorgangs.
+ * Eine dezente Hintergrundfarbe und die blaue Textfarbe
+ * signalisieren einen regulären Verarbeitungsschritt.
+ */
+.loading-message {
+  background: #f5f7ff;
+  color: #536fdf;
+}
+
+/*
+ * Animierter Ladeindikator.
+ * Die unterschiedlich gefärbten Rahmenabschnitte erzeugen
+ * durch die Rotation eine kontinuierliche Ladeanimation.
+ */
+.loading-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #dce3ff;
+  border-top-color: #536fdf;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/*
+ * Fehlerdarstellung bei fehlgeschlagenen Datenoperationen.
+ * Die Elemente werden so angeordnet, dass die Fehlermeldung
+ * und die erneute Ladeaktion ausreichend Platz erhalten.
+ */
+.error-message {
+  justify-content: space-between;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/*
+ * Schaltfläche zum erneuten Ausführen eines fehlgeschlagenen Ladevorgangs.
+ * Die unterstrichene Beschriftung verdeutlicht den interaktiven Charakter.
+ */
+.retry-button {
+  border: 0;
+  background: transparent;
+  color: #a12626;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Rotationsanimation für den Ladeindikator. */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* =========================================================
+   AG-GRID-TABELLE
+   ========================================================= */
+
+/*
+ * Äußerer Container der Datentabelle.
+ * Die Breite wird vollständig an den verfügbaren Platz angepasst.
+ * min-width: 0 verhindert, dass die Tabelle das übergeordnete
+ * Layout durch ihre intrinsische Mindestbreite vergrößert.
+ */
+.grid-shell {
+  width: 100%;
+  min-width: 0;
+}
+
+/*
+ * Hauptkomponente der AG-Grid-Tabelle.
+ * display: block stellt die vollständige Breitenkontrolle sicher.
+ * Die feste Höhe definiert den verfügbaren Anzeigebereich
+ * einschließlich der internen Tabellen- und Navigationsbereiche.
+ */
+.employee-grid {
+  display: block;
+  width: 100%;
+  height: 546px;
+}
+
+/*
+ * Individuelle Darstellung der dynamisch durch AG Grid erzeugten
+ * Mitarbeiterzellen und ihrer HTML-Inhalte.
+ *
+ * ::ng-deep wird verwendet, damit die Formatierungen auch auf
+ * Elemente angewendet werden können, die von AG Grid außerhalb
+ * der regulären Angular-View-Kapselung erzeugt werden.
+ */
+:host ::ng-deep .employee-grid .employee-cell {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-width: 0;
+}
+
+/*
+ * Vertikale Anordnung der Mitarbeiteridentität.
+ * Name und ergänzende Informationen werden untereinander dargestellt.
+ * min-width: 0 ermöglicht die korrekte Anwendung der Textbegrenzung.
+ */
+:host ::ng-deep .employee-grid .employee-identity {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  gap: 5px;
+}
+
+/*
+ * Begrenzung längerer Mitarbeiterinformationen.
+ * Überlaufende Inhalte werden mit Auslassungspunkten gekennzeichnet,
+ * damit die Tabellenstruktur auch bei langen Textwerten erhalten bleibt.
+ */
+:host ::ng-deep .employee-grid .employee-identity strong,
+:host ::ng-deep .employee-grid .employee-identity small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Hervorgehobene Darstellung des Mitarbeiternamens. */
+:host ::ng-deep .employee-grid .employee-identity strong {
+  color: #34415a;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Ergänzende Mitarbeiterinformationen mit zurückhaltender Typografie. */
+:host ::ng-deep .employee-grid .employee-identity small {
+  color: #929daf;
+  font-size: 10px;
+}
+
+/*
+ * Einheitliche Grundgestaltung der Statuskennzeichnungen.
+ * Die Statuswerte werden als kompakte, abgerundete Elemente
+ * dargestellt und durch einen farbigen Punkt ergänzt.
+ */
+:host ::ng-deep .employee-grid .status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+/* Kleiner Statusindikator innerhalb der jeweiligen Statuskennzeichnung. */
+:host ::ng-deep .employee-grid .status-pill i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/*
+ * Statusvariante für aktive Mitarbeiter.
+ * Die grüne Farbgebung kennzeichnet einen aktiven Beschäftigungsstatus.
+ */
+:host ::ng-deep .employee-grid .status-aktiv {
+  background: #e6f7ef;
+  color: #279d77;
+}
+
+/*
+ * Statusvariante für Mitarbeiter im Urlaub.
+ * Die orange Farbgebung unterscheidet vorübergehende Abwesenheiten
+ * von regulär aktiven und inaktiven Beschäftigungsstatus.
+ */
+:host ::ng-deep .employee-grid .status-urlaub {
+  background: #fff3df;
+  color: #d19039;
+}
+
+/*
+ * Statusvariante für inaktive Mitarbeiter.
+ * Neutrale Grautöne sorgen für eine klare Abgrenzung
+ * gegenüber den farblich hervorgehobenen Statusvarianten.
+ */
+:host ::ng-deep .employee-grid .status-inaktiv {
+  background: #f0f2f6;
+  color: #8491a6;
+}
+
+/*
+ * Anordnung der Aktionsschaltflächen innerhalb einer Tabellenzeile.
+ * Die Schaltflächen werden horizontal ausgerichtet und vertikal
+ * innerhalb der verfügbaren Zellenhöhe zentriert.
+ */
+:host ::ng-deep .employee-grid .employee-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+
+/*
+ * Gemeinsame Gestaltung der Aktionen innerhalb der Tabelle.
+ * Einheitliche Abmessungen sorgen für eine konsistente Darstellung
+ * der Bearbeitungs- und sonstigen Mitarbeiteraktionen.
+ */
+:host ::ng-deep .employee-grid .grid-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #dfe6f2;
+  border-radius: 8px;
+  background: #f7f9ff;
+  color: #4f68d0;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+/* Hervorhebung der Tabellenaktionen bei Mausinteraktion. */
+:host ::ng-deep .employee-grid .grid-action-button:hover {
+  background: #edf1ff;
+}
+
+/*
+ * Spezielle Gestaltung der Löschaktion.
+ * Rote Farbakzente signalisieren eine potenziell folgenreiche
+ * Datenänderung und grenzen die Aktion von der Bearbeitung ab.
+ */
+:host ::ng-deep .employee-grid .delete-action {
+  border-color: #f2dede;
+  background: #fff7f7;
+  color: #c94f56;
+}
+
+/* Verstärkte Hervorhebung der Löschaktion beim Überfahren mit der Maus. */
+:host ::ng-deep .employee-grid .delete-action:hover {
+  background: #ffeded;
+}
+
+/* =========================================================
+   TABELLEN-FUSSZEILE
+   ========================================================= */
+
+/*
+ * Unterer Informationsbereich der Tabelle.
+ * Zeigt die Anzahl der aktuell sichtbaren Mitarbeiter
+ * sowie einen ergänzenden Hinweis zum Datenstatus.
+ */
+.grid-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 23px;
+  border-top: 1px solid #edf0f5;
+  color: #9aa4b4;
+  font-size: 10px;
+}
+
+/* Stärkere visuelle Gewichtung der angezeigten Datensatzanzahl. */
+.grid-footer strong { color: #4d5b73; }
+
+/*
+ * Anordnung des ergänzenden Datenstatus.
+ * Der Statusindikator und die zugehörige Beschriftung
+ * werden mit gleichmäßigem Abstand nebeneinander dargestellt.
+ */
+.footer-hint {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* Grüner Punkt als visuelle Kennzeichnung des Datenstatus. */
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2eb786;
+}
+
+/* =========================================================
+   TOAST UND SEITENFUSS
+   ========================================================= */
+
+/*
+ * Positionierung der temporären Statusbenachrichtigung.
+ * Durch position: fixed bleibt die Meldung unabhängig vom Scrollzustand
+ * an der unteren rechten Bildschirmposition sichtbar.
+ * Der hohe z-index stellt sicher, dass sie über den übrigen
+ * Seiteninhalten dargestellt wird.
+ */
+.toast-message {
+  position: fixed;
+  right: 25px;
+  bottom: 25px;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border: 1px solid #d7eee4;
+  border-radius: 11px;
+  background: #fff;
+  color: #34415a;
+  box-shadow: 0 12px 35px #1c29411a;
+  font-size: 12px;
+}
+
+/*
+ * Kreisförmige Erfolgskennzeichnung innerhalb der Benachrichtigung.
+ * Das Symbol wird horizontal und vertikal zentriert dargestellt.
+ */
+.toast-message span {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #e5f7ee;
+  color: #269a71;
+  font-weight: 800;
+}
+
+/*
+ * Fußbereich der gesamten Mitarbeiterseite.
+ * Die einzelnen Informationen werden horizontal verteilt
+ * und bei eingeschränkter Bildschirmbreite flexibel umgebrochen.
+ */
+.page-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 3px 0;
+  color: #a2abba;
+  font-size: 9px;
+}
+
+/* Farblich hervorgehobenes dekoratives Symbol im Seitenfuß. */
+.page-footer b { color: #7189e7; }
+
+/* =========================================================
+   RESPONSIVE DARSTELLUNG
+   ========================================================= */
+
+/*
+ * Anpassungen für mittelgroße Bildschirmauflösungen.
+ *
+ * Das vier-spaltige Statistiklayout wird auf zwei Spalten reduziert.
+ * Gleichzeitig können die Filterelemente umbrechen, damit Suchfeld
+ * und Auswahlfelder weiterhin ausreichend Platz erhalten.
+ */
+@media (max-width: 1100px) {
+  .page-content { padding: 25px 22px; }
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filters-row { flex-wrap: wrap; }
+  .search-box { flex-basis: 100%; }
+  .filter-select { flex: 1; }
+  .filter-select select { max-width: none; }
+  .employee-grid { height: 530px; }
+}
+
+/*
+ * Anpassungen für Smartphones und schmale Ansichtsbereiche.
+ *
+ * Die Seitenabstände werden reduziert, der Kopfbereich wird
+ * vertikal angeordnet und die Statistik-Karten erhalten kompaktere
+ * Innenabstände. Auch Filter, Tabelle, Fußbereich und Benachrichtigungen
+ * werden an die eingeschränkte verfügbare Bildschirmbreite angepasst.
+ */
+@media (max-width: 650px) {
+  .page-content { padding: 22px 13px; }
+
+  .page-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .page-heading .primary-button { width: 100%; }
+  .stats-grid { gap: 10px; }
+
+  .stat-card {
+    min-height: 130px;
+    padding: 14px;
+  }
+
+  .stat-label { font-size: 8px; }
+  .stat-value { font-size: 25px; }
+
+  .stat-foot {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .directory-heading { padding: 18px 14px; }
+  .directory-tabs { gap: 17px; padding: 0 14px; }
+  .filters-row { gap: 8px; padding: 13px 14px; }
+
+  .filter-select {
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .filter-select span { display: none; }
+
+  .filter-select select {
+    width: 100%;
+    font-size: 10px;
+  }
+
+  .reset-button { padding: 8px 0; }
+  .export-button span { display: none; }
+  .employee-grid { height: 500px; }
+
+  .grid-footer {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .page-footer { flex-wrap: wrap; }
+
+  .page-footer span:nth-child(2) {
+    order: 3;
+    width: 100%;
+  }
+
+  .loading-message,
+  .error-message {
+    margin-right: 14px;
+    margin-left: 14px;
+  }
+
+  /*
+   * Auf kleinen Bildschirmen nutzt die Statusbenachrichtigung
+   * nahezu die gesamte verfügbare Breite. Dadurch bleibt die
+   * Meldung auch auf Smartphones gut lesbar und erreichbar.
+   */
+  .toast-message {
+    right: 13px;
+    bottom: 13px;
+    left: 13px;
+  }
+}

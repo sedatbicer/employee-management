@@ -1,0 +1,16 @@
+# Zentrale, nicht vertrauliche Konfiguration für beide Backend-Services.
+# Die ConfigMap wird von Auth Service und Employee Service gemeinsam verwendet.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-cors-config
+  namespace: employee-backend
+  labels:
+    app.kubernetes.io/part-of: employee-management
+    app.kubernetes.io/component: backend
+data:
+  # Leer bedeutet: Es werden keine zusätzlichen Cross-Origin-Ursprünge erlaubt.
+  # Frontend und API werden über dieselbe Domain und denselben Nginx bereitgestellt.
+  # Der Variablenname entspricht der Spring-Boot-Property:
+  # app.cors.allowed-origins
+  APP_CORS_ALLOWED_ORIGINS: ""

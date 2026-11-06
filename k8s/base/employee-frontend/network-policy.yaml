@@ -1,0 +1,40 @@
+
+# NetworkPolicy für das Angular-Frontend mit integriertem Nginx.
+#
+# Sicherheitsziel:
+# - Erlaubt eingehenden HTTP-Verkehr über TCP-Port 80.
+# - Beschränkt die Regel auf Pods des Employee-Frontends.
+# - Lässt ausgehenden Netzwerkverkehr zunächst uneingeschränkt.
+#
+# Hinweis:
+# Da aktuell kein Ingress Controller eingesetzt wird und der lokale
+# Zugriff über kubectl port-forward erfolgt, wird eingehender Verkehr
+# auf Port 80 unabhängig von seiner Quelle zugelassen.
+# Diese Regel ist keine externe Zugriffskontrolle für den Cluster.
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  # Eindeutiger Name der NetworkPolicy innerhalb des Frontend-Namespace.
+  name: employee-frontend-ingress
+  namespace: employee-frontend
+
+spec:
+  # Die Policy gilt ausschließlich für Pods mit diesem Label.
+  # Dadurch werden keine anderen Pods im Namespace beeinflusst.
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: employee-frontend
+
+  # Es wird ausschließlich der eingehende Netzwerkverkehr geregelt.
+  # Der ausgehende Verkehr bleibt weiterhin erlaubt.
+  policyTypes:
+    - Ingress
+
+  ingress:
+    # Erlaubt eingehende HTTP-Verbindungen auf TCP-Port 80.
+    # Da kein "from"-Feld angegeben ist, gilt die Regel für alle Quellen.
+    - ports:
+        - protocol: TCP
+          port: 80

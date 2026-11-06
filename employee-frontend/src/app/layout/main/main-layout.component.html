@@ -1,0 +1,26 @@
+
+<!-- Äußerer Anwendungscontainer für Navigation und Inhaltsbereich. -->
+<div class="app-shell">
+
+  <!-- Seitliche Navigation mit Steuerung für mobile Geräte. -->
+  <app-sidebar
+    [open]="mobileNavOpen()"
+    (close)="closeMobileNavigation()"
+  />
+
+  <!-- Zentraler Inhaltsbereich neben der Sidebar. -->
+  <main class="main-area">
+
+    <!-- Globale Kopfzeile mit Steuerung der mobilen Navigation. -->
+    <app-header
+      (menuToggle)="toggleMobileNavigation()"
+    />
+
+    <!-- Hier wird die aktuell aufgerufene Unterseite angezeigt. -->
+    <section class="page-content">
+      <router-outlet />
+    </section>
+
+  </main>
+
+</div>

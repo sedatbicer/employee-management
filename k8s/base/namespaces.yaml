@@ -1,0 +1,58 @@
+# =============================================================================
+# Kubernetes Namespace-Konfiguration
+# Projekt: Employee Management
+#
+# Zweck:
+# Logische Trennung der Anwendungsressourcen in drei Verantwortungsbereiche:
+# Frontend, Backend und Datenbanken.
+#
+# Architektur:
+# - employee-frontend: Angular-Anwendung mit integriertem Nginx
+# - employee-backend: Spring-Boot-Microservices
+# - employee-database: Persistente MySQL-Datenbanken
+#
+# Plattformen:
+# - Lokale Entwicklung: Docker Desktop / kind
+# - Zielplattform: AWS EKS
+#
+# Hinweis:
+# Namespaces stellen eine logische Trennung dar. Eine vollständige
+# Netzwerkisolation erfordert zusätzliche NetworkPolicies.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Namespace 1: Frontend
+# -----------------------------------------------------------------------------
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: employee-frontend
+  labels:
+    app.kubernetes.io/part-of: employee-management
+    app.kubernetes.io/component: frontend
+
+---
+
+# -----------------------------------------------------------------------------
+# Namespace 2: Backend
+# -----------------------------------------------------------------------------
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: employee-backend
+  labels:
+    app.kubernetes.io/part-of: employee-management
+    app.kubernetes.io/component: backend
+
+---
+
+# -----------------------------------------------------------------------------
+# Namespace 3: Datenbanken
+# -----------------------------------------------------------------------------
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: employee-database
+  labels:
+    app.kubernetes.io/part-of: employee-management
+    app.kubernetes.io/component: database

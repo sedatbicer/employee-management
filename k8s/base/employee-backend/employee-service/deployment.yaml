@@ -1,0 +1,125 @@
+
+# Deployment für den Employee-Service.
+# Verwaltet die gewünschte Anzahl von Anwendungs-Pods und stellt
+# die Konfiguration für den Betrieb innerhalb des Kubernetes-Clusters bereit.
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: employee-service
+  namespace: employee-backend
+  labels:
+    app.kubernetes.io/name: employee-service
+    app.kubernetes.io/part-of: employee-management
+    app.kubernetes.io/component: backend
+
+spec:
+  # Eine Instanz für die lokale Entwicklungsumgebung.
+  # Eine höhere Replikazahl kann später für Skalierung verwendet werden.
+  replicas: 1
+
+  # Verbindet das Deployment mit den Pods anhand ihres Anwendungslabels.
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: employee-service
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: employee-service
+        app.kubernetes.io/part-of: employee-management
+        app.kubernetes.io/component: backend
+
+    spec:
+      containers:
+        - name: employee-service
+
+          # Lokal gebautes Anwendungsimage.
+          # IfNotPresent verhindert unnötige Image-Pulls,
+          # sofern das Image in der Container-Runtime verfügbar ist.
+          image: employee-service:1.0.4
+          imagePullPolicy: IfNotPresent
+
+          # Gemeinsame, nicht vertrauliche Konfiguration für beide Backend-Services.
+          # Die CORS-Einstellungen werden zentral über eine ConfigMap bereitgestellt.
+          envFrom:
+            - configMapRef:
+                name: backend-cors-config
+
+          # HTTP-Port des Spring-Boot-Services.
+          ports:
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+
+          # Startup-Probe: Gibt dem Employee-Service ausreichend Zeit,
+          # Spring Boot und die erforderlichen Komponenten zu starten.
+          # Während dieser Zeit werden Liveness- und Readiness-Probes zurückgestellt.
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 24
+
+          # Liveness-Probe: Erkennt, ob der Employee-Service noch funktionsfähig ist.
+          # Bei wiederholtem Fehlschlagen startet Kubernetes den Container neu.
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          # Readiness-Probe: Prüft, ob der Employee-Service bereit ist,
+          # eingehende Anfragen über seinen Kubernetes-Service zu empfangen.
+          # Bei Fehlschlagen wird der Pod vorübergehend aus den Service-Endpunkten entfernt.
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          # Anwendungskonfiguration über Umgebungsvariablen.
+          env:
+            - name: SERVER_PORT
+              value: "8081"
+
+            # Kubernetes-interne DNS-Adresse des Employee-MySQL-Service.
+            - name: DB_URL
+              value: "jdbc:mysql://employee-mysql.employee-database.svc.cluster.local:3306/people_hub"
+
+            # Datenbankzugangsdaten werden nicht direkt im Manifest gespeichert.
+            # Sie werden aus dem namespacegebundenen Kubernetes-Secret gelesen.
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: employee-service-secrets
+                  key: DB_USERNAME
+
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: employee-service-secrets
+                  key: DB_PASSWORD
+
+            # Gemeinsames JWT-Secret für die dienstübergreifende Token-Prüfung.
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: employee-service-secrets
+                  key: JWT_SECRET
+
+          # Ressourcenanforderungen und Obergrenzen für den Container.
+          # Die Werte dienen als Ausgangspunkt für die lokale Umgebung.
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi

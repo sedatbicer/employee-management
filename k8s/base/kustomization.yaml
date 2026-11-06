@@ -1,0 +1,21 @@
+
+# Zentrale Kustomize-Konfiguration für das Employee-Management-System.
+#
+# Diese Datei fasst alle drei Anwendungsebenen zusammen:
+# - Frontend
+# - Backend
+# - Datenbanken
+#
+# Die einzelnen Bereiche behalten ihre eigene Kustomize-Konfiguration.
+# Dadurch bleiben die Komponenten modular und unabhängig verwaltbar.
+#
+# Diese gemeinsame Basis dient später als Grundlage für unterschiedliche
+# Umgebungen wie Docker Desktop und AWS EKS.
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - employee-frontend/
+  - employee-backend/
+  - database/
