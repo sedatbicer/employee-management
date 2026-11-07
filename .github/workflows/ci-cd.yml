@@ -1,47 +1,107 @@
-# ==========================================================
-# EMPLOYEE MANAGEMENT - CI/CD PIPELINE
-# ==========================================================
+# =============================================================================
+# EMPLOYEE MANAGEMENT – CI/CD-PIPELINE
+# =============================================================================
+#
+# Zweck:
+# Automatisierung der Qualitätssicherung, des Anwendungsbuilds und der
+# Veröffentlichung der Container-Images für das Employee-Management-System.
+#
+# Pipeline-Ablauf:
+#   1. Backend-Tests für Employee Service und Auth Service
+#   2. Frontend-Build und Sicherheitsprüfung der npm-Abhängigkeiten
+#   3. Überprüfung von Abhängigkeitsänderungen in Pull Requests
+#   4. Docker-Build und Integrationstests der Gesamtanwendung
+#   5. Veröffentlichung der Container-Images in der GitHub Container Registry
+#
+# Zielarchitektur:
+#   GitHub Actions → GHCR → Kubernetes → Argo CD
+#
+# GitHub Actions übernimmt die kontinuierliche Integration (CI) und
+# die Erstellung der Container-Images.
+#
+# Die spätere Bereitstellung in Kubernetes wird über den GitOps-Ansatz
+# mit Argo CD und Argo CD Image Updater umgesetzt.
+#
+# =============================================================================
 
 name: Employee Management CI/CD
 
-# ----------------------------------------------------------
-# 1. WORKFLOW TRIGGER
-# ----------------------------------------------------------
-# Startet die Pipeline bei Pushes auf die angegebenen Branches
-# sowie bei Pull Requests mit Ziel main.
+# =============================================================================
+# 1. WORKFLOW-AUSLÖSER
+# =============================================================================
+
 on:
+  # Pipeline bei Änderungen auf main und ci-cd-pipeline starten.
   push:
     branches:
       - main
       - ci-cd-pipeline
 
+  # Pull Requests gegen main automatisch überprüfen.
   pull_request:
     branches:
       - main
 
-# ----------------------------------------------------------
-# 2. BERECHTIGUNGEN
-# ----------------------------------------------------------
-# Die Pipeline erhält nur die benötigten Leserechte.
+# =============================================================================
+# 2. GLOBALE BERECHTIGUNGEN
+# =============================================================================
+#
+# Grundsätzlich werden nur die erforderlichen Berechtigungen vergeben.
+# Zusätzliche Berechtigungen werden ausschließlich dem jeweiligen Job
+# zugewiesen, der sie tatsächlich benötigt.
+#
+# contents: read       – Repository-Inhalte lesen.
+# pull-requests: read  – Informationen zu Pull Requests lesen.
+#
+# Die Berechtigung packages: write wird ausschließlich im GHCR-Job vergeben.
+#
+# =============================================================================
+
 permissions:
   contents: read
   pull-requests: read
 
-# Verhindert unnötige parallele Ausführungen.
+# =============================================================================
+# 3. PARALLELISIERUNG UND ABBRUCH VERALTETER AUSFÜHRUNGEN
+# =============================================================================
+#
+# Für jeden Branch wird eine eigene Ausführungsgruppe erstellt.
+# Ältere laufende Ausführungen derselben Gruppe werden abgebrochen,
+# sobald eine neue Ausführung gestartet wird.
+#
+# Dadurch werden unnötige parallele Builds vermieden.
+#
+# =============================================================================
+
 concurrency:
   group: employee-management-${{ github.ref }}
   cancel-in-progress: true
 
-# ==========================================================
-# JOB 1: BACKEND TESTS
-# ==========================================================
+# =============================================================================
+# JOB 1: BACKEND-TESTS
+# =============================================================================
+#
+# Ziel:
+# Beide Spring-Boot-Microservices unabhängig voneinander testen.
+#
+# Durchführung:
+#   - Separate Testausführung für Employee Service und Auth Service.
+#   - Bereitstellung einer isolierten MySQL-8.4-Testdatenbank.
+#   - Ausführung der vorhandenen Maven-Tests.
+#   - Speicherung der Testergebnisse als GitHub-Artefakte.
+#
+# Beide Backend-Testläufe müssen erfolgreich abgeschlossen werden,
+# bevor die Docker-Integrationstests beginnen.
+#
+# =============================================================================
+
 jobs:
   backend-tests:
     name: Backend Tests (${{ matrix.service }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    # Beide Backend-Services werden separat getestet.
+    # Beide Microservices parallel und unabhängig voneinander testen.
     strategy:
       fail-fast: false
       matrix:
@@ -49,32 +109,28 @@ jobs:
           - employee-service
           - auth-service
 
-    # ------------------------------------------------------
-    # MYSQL TESTDATENBANK
-    # ------------------------------------------------------
-    # Für jeden Backend-Service wird eine eigene MySQL-
-    # Testdatenbank gestartet.
+    # Für jeden Testlauf eine eigene MySQL-Instanz bereitstellen.
     services:
       mysql:
         image: mysql:8.4
 
         env:
-          # Root-Passwort abhängig vom Backend-Service.
+          # Root-Passwort abhängig vom jeweiligen Backend-Service.
           MYSQL_ROOT_PASSWORD: ${{ matrix.service == 'employee-service' && secrets.EMPLOYEE_MYSQL_ROOT_PASSWORD || secrets.AUTH_MYSQL_ROOT_PASSWORD }}
 
-          # Datenbankname abhängig vom Backend-Service.
+          # Datenbankname abhängig vom jeweiligen Backend-Service.
           MYSQL_DATABASE: ${{ matrix.service == 'employee-service' && 'people_hub' || 'people_hub_auth' }}
 
-          # Datenbankbenutzer aus GitHub Secrets.
+          # Datenbankbenutzer aus den GitHub Repository Secrets.
           MYSQL_USER: ${{ matrix.service == 'employee-service' && secrets.EMPLOYEE_DB_USER || secrets.AUTH_DB_USER }}
 
-          # Datenbankpasswort aus GitHub Secrets.
+          # Datenbankpasswort aus den GitHub Repository Secrets.
           MYSQL_PASSWORD: ${{ matrix.service == 'employee-service' && secrets.EMPLOYEE_DB_PASSWORD || secrets.AUTH_DB_PASSWORD }}
 
         ports:
           - 3306:3306
 
-        # Wartet, bis MySQL erreichbar ist.
+        # MySQL muss betriebsbereit sein, bevor die Maven-Tests beginnen.
         options: >-
           --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\""
           --health-interval=10s
@@ -82,30 +138,24 @@ jobs:
           --health-retries=10
 
     steps:
-      # ----------------------------------------------------
-      # QUELLCODE HERUNTERLADEN
-      # ----------------------------------------------------
-      - name: Checkout repository
+      # Repository-Inhalte für den aktuellen Workflow-Lauf bereitstellen.
+      - name: Repository auschecken
         uses: actions/checkout@v4
 
-      # ----------------------------------------------------
-      # JAVA INSTALLIEREN
-      # ----------------------------------------------------
-      - name: Set up Java 21
+      # Java 21 einrichten und Maven-Abhängigkeiten zwischenspeichern.
+      - name: Java 21 einrichten
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
           cache: maven
 
-      # ----------------------------------------------------
-      # BACKEND TESTS AUSFÜHREN
-      # ----------------------------------------------------
-      - name: Run Maven tests
+      # Maven-Tests mit der jeweils zugehörigen MySQL-Datenbank ausführen.
+      - name: Maven-Tests ausführen
         working-directory: ${{ matrix.service }}
 
         env:
-          # Verbindung zur jeweiligen Testdatenbank.
+          # JDBC-Verbindung zur jeweiligen Testdatenbank.
           DB_URL: jdbc:mysql://127.0.0.1:3306/${{ matrix.service == 'employee-service' && 'people_hub' || 'people_hub_auth' }}
 
           # Datenbankzugangsdaten aus GitHub Secrets.
@@ -113,24 +163,22 @@ jobs:
 
           DB_PASSWORD: ${{ matrix.service == 'employee-service' && secrets.EMPLOYEE_DB_PASSWORD || secrets.AUTH_DB_PASSWORD }}
 
-          # JWT-Schlüssel aus GitHub Secrets.
+          # Gemeinsames Geheimnis zur Überprüfung von JWT-Signaturen.
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
-          # Administrator-Zugangsdaten für den Auth-Service.
+          # Zugangsdaten für die initiale Administrator-Konfiguration.
           AUTH_ADMIN_EMAIL: ${{ secrets.AUTH_ADMIN_EMAIL }}
           AUTH_ADMIN_PASSWORD: ${{ secrets.AUTH_ADMIN_PASSWORD }}
 
-          # CORS-Konfiguration für den CI-Test.
-          # Keine geheime Information, daher kein Secret.
+          # Erlaubter Frontend-Ursprung für die CI-Testumgebung.
+          # Der Variablenname entspricht der Spring-Boot-Konfiguration.
           CORS_ALLOWED_ORIGINS: http://localhost:4200
 
-        # Backend kompilieren und Tests ausführen.
+        # Anwendung kompilieren und vorhandene Tests ausführen.
         run: mvn -B -ntp test
 
-      # ----------------------------------------------------
-      # TESTBERICHTE SPEICHERN
-      # ----------------------------------------------------
-      - name: Upload backend test reports
+      # Testergebnisse auch bei fehlgeschlagenen Tests zur Analyse sichern.
+      - name: Backend-Testberichte speichern
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -140,133 +188,166 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-# ==========================================================
-# JOB 2: FRONTEND BUILD UND SECURITY CHECK
-# ==========================================================
+# =============================================================================
+# JOB 2: FRONTEND-BUILD UND SICHERHEITSPRÜFUNG
+# =============================================================================
+#
+# Ziel:
+# Abhängigkeiten installieren, auf bekannte Sicherheitslücken prüfen
+# und eine optimierte Produktionsversion der Angular-Anwendung erstellen.
+#
+# Das erzeugte Build-Ergebnis wird als GitHub-Artefakt gespeichert.
+#
+# =============================================================================
+
   frontend-build:
     name: Frontend Build & Security
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
-      # Quellcode herunterladen.
-      - name: Checkout repository
+      # Repository-Inhalte bereitstellen.
+      - name: Repository auschecken
         uses: actions/checkout@v4
 
-      # Node.js installieren.
-      - name: Set up Node.js
+      # Festgelegte Node.js-Version für reproduzierbare Builds verwenden.
+      - name: Node.js einrichten
         uses: actions/setup-node@v4
         with:
           node-version: '24.15.0'
           cache: npm
           cache-dependency-path: employee-frontend/package-lock.json
 
-      # Abhängigkeiten anhand der Lockdatei installieren.
-      - name: Install frontend dependencies
+      # Abhängigkeiten exakt anhand der vorhandenen Lockdatei installieren.
+      - name: Frontend-Abhängigkeiten installieren
         working-directory: employee-frontend
         run: npm ci
 
-      # Sicherheitsprüfung der npm-Abhängigkeiten.
-      - name: Audit npm dependencies
+      # Pipeline bei Sicherheitslücken mit hohem oder kritischem Risiko abbrechen.
+      - name: npm-Abhängigkeiten überprüfen
         working-directory: employee-frontend
         run: npm audit --audit-level=high
 
-      # Produktiven Angular-Build erstellen.
-      - name: Build Angular application
+      # Optimiertes Angular-Produktionsbuild erstellen.
+      - name: Angular-Produktionsbuild erstellen
         working-directory: employee-frontend
         run: npm run build -- --configuration production
 
-      # Build-Ergebnis als Artefakt speichern.
-      - name: Upload frontend build
+      # Erzeugtes Produktionsbuild für spätere Analysen aufbewahren.
+      - name: Frontend-Build speichern
         uses: actions/upload-artifact@v4
         with:
           name: angular-production-build
           path: employee-frontend/dist/
           retention-days: 14
 
-# ==========================================================
-# JOB 3: DEPENDENCY SECURITY REVIEW
-# ==========================================================
+# =============================================================================
+# JOB 3: ABHÄNGIGKEITSPRÜFUNG
+# =============================================================================
+#
+# Ziel:
+# Änderungen an Abhängigkeiten innerhalb von Pull Requests überprüfen.
+#
+# Die Prüfung verwendet die GitHub Advisory Database und verhindert
+# die Übernahme von Abhängigkeiten mit Sicherheitslücken hoher
+# oder kritischer Schwere.
+#
+# Dieser Job wird ausschließlich bei Pull Requests ausgeführt.
+#
+# =============================================================================
+
   dependency-review:
     name: Dependency Review
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
-    # Nur bei Pull Requests ausführen.
+    # Prüfung ausschließlich bei Pull Requests durchführen.
     if: github.event_name == 'pull_request'
 
     steps:
-      - name: Checkout repository
+      - name: Repository auschecken
         uses: actions/checkout@v4
 
-      # Prüft neue oder aktualisierte Abhängigkeiten
-      # anhand der GitHub Advisory Database.
-      - name: Review dependencies
+      # Neue und aktualisierte Abhängigkeiten auf bekannte Schwachstellen prüfen.
+      - name: Abhängigkeiten überprüfen
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
 
-# ==========================================================
-# JOB 4: DOCKER BUILD UND INTEGRATION TESTS
-# ==========================================================
+# =============================================================================
+# JOB 4: DOCKER-BUILD UND INTEGRATIONSTESTS
+# =============================================================================
+#
+# Ziel:
+# Die gesamte Anwendung in einer temporären Docker-Compose-Umgebung
+# aufbauen und die Erreichbarkeit der zentralen Anwendungskomponenten prüfen.
+#
+# Voraussetzungen:
+#   - Backend-Tests erfolgreich abgeschlossen.
+#   - Frontend-Build erfolgreich abgeschlossen.
+#
+# Integrationsprüfungen:
+#   - Employee Service über seinen Health-Endpunkt.
+#   - Auth Service über seinen Health-Endpunkt.
+#   - Frontend über eine HTTP-Anfrage.
+#
+# Nach Abschluss werden die temporären Container und Volumes entfernt.
+# Die bestehende lokale Kubernetes-Umgebung wird dadurch nicht verändert.
+#
+# =============================================================================
+
   docker-integration:
     name: Docker Build & Integration Tests
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
-    # Erst starten, wenn Backend und Frontend erfolgreich sind.
+    # Erst starten, wenn Backend- und Frontend-Prüfungen erfolgreich waren.
     needs:
       - backend-tests
       - frontend-build
 
     steps:
-      # Quellcode herunterladen.
-      - name: Checkout repository
+      - name: Repository auschecken
         uses: actions/checkout@v4
 
-      # Docker Buildx bereitstellen.
-      - name: Set up Docker Buildx
+      # Docker Buildx für den Container-Build bereitstellen.
+      - name: Docker Buildx einrichten
         uses: docker/setup-buildx-action@v3
 
-      # ----------------------------------------------------
-      # DOCKER COMPOSE: GESAMTSYSTEM STARTEN
-      # ----------------------------------------------------
-      - name: Build and start application
-
-        # Alle benötigten Zugangsdaten werden aus GitHub
-        # Repository Secrets übernommen.
+      # Gesamte Anwendung inklusive Datenbanken mit Docker Compose starten.
+      - name: Anwendung aufbauen und starten
         env:
+          # Zugangsdaten für die Employee-Datenbank.
           EMPLOYEE_MYSQL_ROOT_PASSWORD: ${{ secrets.EMPLOYEE_MYSQL_ROOT_PASSWORD }}
           EMPLOYEE_DB_USER: ${{ secrets.EMPLOYEE_DB_USER }}
           EMPLOYEE_DB_PASSWORD: ${{ secrets.EMPLOYEE_DB_PASSWORD }}
 
+          # Zugangsdaten für die Auth-Datenbank.
           AUTH_MYSQL_ROOT_PASSWORD: ${{ secrets.AUTH_MYSQL_ROOT_PASSWORD }}
           AUTH_DB_USER: ${{ secrets.AUTH_DB_USER }}
           AUTH_DB_PASSWORD: ${{ secrets.AUTH_DB_PASSWORD }}
 
+          # Gemeinsames JWT-Geheimnis.
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
+          # Initiale Administrator-Zugangsdaten.
           AUTH_ADMIN_EMAIL: ${{ secrets.AUTH_ADMIN_EMAIL }}
           AUTH_ADMIN_PASSWORD: ${{ secrets.AUTH_ADMIN_PASSWORD }}
 
-        # Baut alle Images und startet die Services.
+        # Images bauen und alle Compose-Services starten.
         run: docker compose up -d --build
 
-      # ----------------------------------------------------
-      # EMPLOYEE-SERVICE HEALTH CHECK
-      # ----------------------------------------------------
-      - name: Check employee service
+      # Health-Endpunkt des Employee Service auf erfolgreiche Antwort prüfen.
+      - name: Employee Service überprüfen
         run: |
           curl --fail --silent --show-error \
             --retry 30 \
             --retry-all-errors \
             --retry-delay 5 \
-            http://127.0.0.1:8081/actuator/health  
+            http://127.0.0.1:8081/actuator/health
 
-      # ----------------------------------------------------
-      # AUTH-SERVICE HEALTH CHECK
-      # ----------------------------------------------------
-      - name: Check auth service
+      # Health-Endpunkt des Auth Service auf erfolgreiche Antwort prüfen.
+      - name: Auth Service überprüfen
         run: |
           curl --fail --silent --show-error \
             --retry 30 \
@@ -274,10 +355,8 @@ jobs:
             --retry-delay 5 \
             http://127.0.0.1:8082/actuator/health
 
-      # ----------------------------------------------------
-      # FRONTEND HEALTH CHECK
-      # ----------------------------------------------------
-      - name: Check frontend
+      # HTTP-Erreichbarkeit des Angular-Frontends überprüfen.
+      - name: Frontend überprüfen
         run: |
           curl --fail --silent --show-error \
             --retry 20 \
@@ -285,14 +364,11 @@ jobs:
             --retry-delay 5 \
             http://127.0.0.1:4200/
 
-      # ----------------------------------------------------
-      # FEHLERANALYSE
-      # ----------------------------------------------------
-      # Container-Logs nur bei einem Fehler anzeigen.
-      - name: Show Docker logs on failure
+      # Bei Fehlern Containerstatus und Protokolle zur Analyse ausgeben.
+      - name: Docker-Protokolle bei Fehlern anzeigen
         if: failure()
         run: |
-          echo "===== CONTAINER STATUS ====="
+          echo "===== CONTAINERSTATUS ====="
           docker compose ps -a
 
           echo "===== EMPLOYEE SERVICE ====="
@@ -304,10 +380,166 @@ jobs:
           echo "===== AUTH SERVICE ====="
           docker logs auth-service
 
-      # ----------------------------------------------------
-      # AUFRÄUMEN
-      # ----------------------------------------------------
-      # Container und temporäre Datenbank-Volumes entfernen.
-      - name: Stop and clean up containers
+      # Temporäre Testumgebung unabhängig vom Ergebnis vollständig entfernen.
+      - name: Container und Volumes bereinigen
         if: always()
         run: docker compose down --volumes --remove-orphans
+
+# =============================================================================
+# JOB 5: CONTAINER-IMAGES ERSTELLEN UND IN GHCR VERÖFFENTLICHEN
+# =============================================================================
+#
+# Ziel:
+# Die drei Anwendungskomponenten als Docker-Images erstellen und
+# in der GitHub Container Registry (GHCR) veröffentlichen.
+#
+# Voraussetzungen:
+#   - Docker-Integrationstests erfolgreich abgeschlossen.
+#   - Workflow wurde durch einen Push ausgelöst.
+#
+# Veröffentlichte Images:
+#   - ghcr.io/sedatbicer/employee-frontend
+#   - ghcr.io/sedatbicer/employee-service
+#   - ghcr.io/sedatbicer/auth-service
+#
+# Image-Kennzeichnung:
+#   - sha-<commit-id>: Eindeutige Zuordnung zu einem Git-Commit.
+#   - main: Aktueller Image-Stand des main-Branches.
+#   - ci-cd-pipeline: Aktueller Image-Stand des Entwicklungsbranches.
+#
+# Die Branch-Tags werden getrennt geführt.
+# Dadurch überschreiben sich die Images der beiden Branches nicht.
+#
+# Authentifizierung:
+#   Das automatisch bereitgestellte GITHUB_TOKEN wird zur Anmeldung
+#   an GHCR verwendet. Ein persönlicher Zugriffstoken ist für das
+#   Veröffentlichen der Images nicht erforderlich.
+#
+# Sicherheit:
+#   Die Berechtigung packages: write wird ausschließlich diesem Job erteilt.
+#
+# =============================================================================
+
+  ghcr-publish:
+    name: Container-Images in GHCR veröffentlichen
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    # Veröffentlichung erst nach erfolgreichen Integrationstests zulassen.
+    needs:
+      - docker-integration
+
+    # Pull Requests dürfen keine Container-Images veröffentlichen.
+    if: github.event_name == 'push'
+
+    # Minimale Berechtigungen für das Lesen des Repositorys
+    # und das Veröffentlichen von Container-Images vergeben.
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      # Docker Buildx für effiziente und cachefähige Image-Builds einrichten.
+      - name: Docker Buildx einrichten
+        uses: docker/setup-buildx-action@v3
+
+      # Anmeldung an GHCR mit dem automatisch bereitgestellten GITHUB_TOKEN.
+      - name: Bei GitHub Container Registry anmelden
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # -----------------------------------------------------------------------
+      # 5.1 FRONTEND-IMAGE
+      # -----------------------------------------------------------------------
+      #
+      # Produktionsimage des Angular-Frontends erstellen und veröffentlichen.
+      #
+      # Der Build verwendet das vorhandene Dockerfile unter:
+      # employee-frontend/Dockerfile
+      #
+      - name: Employee Frontend erstellen und veröffentlichen
+        uses: docker/build-push-action@v6
+        with:
+          context: ./employee-frontend
+          push: true
+
+          # Commit-Tag und separaten Branch-Tag veröffentlichen.
+          tags: |
+            ghcr.io/sedatbicer/employee-frontend:sha-${{ github.sha }}
+            ghcr.io/sedatbicer/employee-frontend:${{ github.ref_name }}
+
+          # Repository-Verknüpfung und Image-Metadaten hinterlegen.
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.description=Angular Frontend für Employee Management
+            org.opencontainers.image.revision=${{ github.sha }}
+
+          # Build-Cache für das Frontend getrennt verwalten.
+          cache-from: type=gha,scope=employee-frontend
+          cache-to: type=gha,mode=max,scope=employee-frontend
+
+      # -----------------------------------------------------------------------
+      # 5.2 EMPLOYEE-SERVICE-IMAGE
+      # -----------------------------------------------------------------------
+      #
+      # Container-Image des Employee Service erstellen und veröffentlichen.
+      #
+      # Der Build verwendet das vorhandene Dockerfile unter:
+      # employee-service/Dockerfile
+      #
+      - name: Employee Service erstellen und veröffentlichen
+        uses: docker/build-push-action@v6
+        with:
+          context: ./employee-service
+          push: true
+
+          # Commit-Tag und separaten Branch-Tag veröffentlichen.
+          tags: |
+            ghcr.io/sedatbicer/employee-service:sha-${{ github.sha }}
+            ghcr.io/sedatbicer/employee-service:${{ github.ref_name }}
+
+          # Repository-Verknüpfung und Image-Metadaten hinterlegen.
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.description=Employee Service Microservice
+            org.opencontainers.image.revision=${{ github.sha }}
+
+          # Build-Cache für den Employee Service getrennt verwalten.
+          cache-from: type=gha,scope=employee-service
+          cache-to: type=gha,mode=max,scope=employee-service
+
+      # -----------------------------------------------------------------------
+      # 5.3 AUTH-SERVICE-IMAGE
+      # -----------------------------------------------------------------------
+      #
+      # Container-Image des Auth Service erstellen und veröffentlichen.
+      #
+      # Der Build verwendet das vorhandene Dockerfile unter:
+      # auth-service/Dockerfile
+      #
+      - name: Auth Service erstellen und veröffentlichen
+        uses: docker/build-push-action@v6
+        with:
+          context: ./auth-service
+          push: true
+
+          # Commit-Tag und separaten Branch-Tag veröffentlichen.
+          tags: |
+            ghcr.io/sedatbicer/auth-service:sha-${{ github.sha }}
+            ghcr.io/sedatbicer/auth-service:${{ github.ref_name }}
+
+          # Repository-Verknüpfung und Image-Metadaten hinterlegen.
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.description=Authentication Service Microservice
+            org.opencontainers.image.revision=${{ github.sha }}
+
+          # Build-Cache für den Auth Service getrennt verwalten.
+          cache-from: type=gha,scope=auth-service
+          cache-to: type=gha,mode=max,scope=auth-service
