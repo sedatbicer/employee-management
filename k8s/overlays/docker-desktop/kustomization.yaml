@@ -1,20 +1,72 @@
-# Kustomize-Overlay für die lokale Docker-Desktop-Umgebung.
+# =============================================================================
+# Kustomize-Overlay für Docker Desktop
+# =============================================================================
 #
-# Dieses Overlay verwendet die gemeinsame Kubernetes-Basis.
-# Umgebungsspezifische Anpassungen können hier später ergänzt werden,
-# ohne die allgemeinen Ressourcen unter k8s/base zu verändern.
+# Zweck:
+# Definiert die umgebungsspezifische Bereitstellung der Anwendung.
 #
-# Die Basis enthält:
-# - Angular-Frontend mit integriertem Nginx
-# - Employee Service und Auth Service
-# - Employee- und Auth-MySQL-Datenbank
-# - Services, PersistentVolumeClaims und NetworkPolicies
+# Container-Images:
+# Alle Anwendungsimages werden aus der privaten GitHub Container Registry
+# (GHCR) bezogen. Die Commit-SHA-Tags ermöglichen eine nachvollziehbare
+# Zuordnung zu einem konkreten Quellcode-Stand.
 #
-# Dieses Overlay verändert zunächst keine Ressourcen.
-# Es stellt lediglich die Verbindung zur gemeinsamen Basis her.
+# Image-Zugriff:
+# Das Kubernetes-Secret ghcr-pull-secret ermöglicht den authentifizierten
+# Zugriff auf private Container-Images.
+#
+# =============================================================================
 
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
   - ../../base
+
+# Private GHCR-Images mit eindeutigem Commit-SHA verwenden.
+images:
+  - name: employee-frontend
+    newName: ghcr.io/sedatbicer/employee-frontend
+    newTag: sha-a49ea3d880fdce304d0d00f374e576583edb8178
+
+  - name: employee-service
+    newName: ghcr.io/sedatbicer/employee-service
+    newTag: sha-a49ea3d880fdce304d0d00f374e576583edb8178
+
+  - name: auth-service
+    newName: ghcr.io/sedatbicer/auth-service
+    newTag: sha-a49ea3d880fdce304d0d00f374e576583edb8178
+
+# Image-Pull-Secret für alle drei Anwendungsdeployments konfigurieren.
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: employee-frontend
+    patch: |-
+      - op: add
+        path: /spec/template/spec/imagePullSecrets
+        value:
+          - name: ghcr-pull-secret
+
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: employee-service
+    patch: |-
+      - op: add
+        path: /spec/template/spec/imagePullSecrets
+        value:
+          - name: ghcr-pull-secret
+
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: auth-service
+    patch: |-
+      - op: add
+        path: /spec/template/spec/imagePullSecrets
+        value:
+          - name: ghcr-pull-secret
