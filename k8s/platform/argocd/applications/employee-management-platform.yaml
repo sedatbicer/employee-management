@@ -17,7 +17,7 @@
 # ci-cd-pipeline
 #
 # Git Pfad:
-# platform/image-updater
+# k8s/platform/image-updater
 #
 # Namespace:
 # argocd
@@ -54,7 +54,7 @@ spec:
   source:
     repoURL: git@github.com:sedatbicer/employee-management.git
     targetRevision: ci-cd-pipeline
-    path: platform/image-updater
+    path: k8s/platform/image-updater
 
   # ---------------------------------------------------------------------------
   # Kubernetes Ziel
