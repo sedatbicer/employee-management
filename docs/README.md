@@ -1,343 +1,287 @@
-# Employee Management – Kubernetes Documentation
+# Employee Management System
 
-## 1. Überblick
+**Full-Stack-Anwendung mit Angular, Spring Boot, MySQL, Docker, Kubernetes und GitOps**
 
-Diese Dokumentation beschreibt die Architektur, Implementierung, Konfiguration und den Betrieb der Kubernetes-Umgebung des Employee-Management-Projekts.
+Ein Full-Stack-Projekt zur Verwaltung von Mitarbeitern mit rollenbasierter Authentifizierung, getrennten Backend-Services und einer containerisierten Infrastruktur.
 
-Die Anwendung besteht aus einem Angular-Frontend, zwei Spring-Boot-Backend-Services und zwei MySQL-Datenbanken.
+Neben der Anwendungsentwicklung lag der Schwerpunkt auf dem Aufbau einer automatisierten CI/CD-Pipeline und einer GitOps-basierten Bereitstellung mit Kubernetes, Argo CD und Argo CD Image Updater.
 
-Die Kubernetes-Umgebung wurde zunächst lokal mit Docker Desktop eingerichtet.
 
-Eine spätere Bereitstellung auf AWS Elastic Kubernetes Service (EKS) ist vorgesehen. Die AWS-Konfiguration befindet sich derzeit in Vorbereitung und ist noch nicht deployt oder funktional getestet.
+## 1. Projektübersicht
 
-Diese Dokumentation soll sowohl als technische Referenz für die Entwicklung als auch als Betriebs- und Wartungsdokumentation dienen.
+Das Employee Management System ist eine webbasierte Anwendung zur Verwaltung von Mitarbeiterdaten.
 
-## 2. Projektarchitektur
+Die Anwendung besteht aus einem Angular-Frontend, zwei eigenständigen Spring-Boot-Backend-Services und zwei separaten MySQL-Datenbanken.
+
+Die Authentifizierung und die Mitarbeiterverwaltung sind als eigenständige Services umgesetzt.
+
+Die Anwendung wurde zunächst mit Docker Compose betrieben und anschließend in eine lokale Kubernetes-Umgebung auf Basis von Docker Desktop überführt.
+
+Darauf aufbauend wurde eine automatisierte CI/CD- und GitOps-Architektur implementiert.
+
+## 2. Screenshots der Anwendung
+
+
+### Login
+![Login-Seite](docs/images/login.png)
+
+### Mitarbeiterverwaltung
+
+![Mitarbeiterliste](docs/images/employee_list.png)
+
+![Mitarbeiterliste mit Pagination](docs/images/employee_list_pagination.png)
+
+### Neuen Mitarbeiter anlegen
+
+![Neuen Mitarbeiter anlegen](docs/images/employee_create.png)
+
+### Mitarbeiter bearbeiten
+
+![Mitarbeiter bearbeiten](docs/images/employee_edit.png)
+
+### Mitarbeiter löschen
+
+![Mitarbeiter bearbeiten](docs/images/employee_delete.png)
+
+
+## 3. Technologiestack
+## Technologiestack
+
+| Bereich | Technologie |
+|---|---|
+| Frontend | Angular, TypeScript |
+| Backend | Java 21, Spring Boot |
+| API-Architektur | REST API, HTTP/JSON |
+| Persistenz | Spring Data JPA, Hibernate |
+| Authentifizierung und Autorisierung | Spring Security, JWT |
+| Datenbanken | MySQL 8.4 |
+| Containerisierung | Docker, Docker Compose |
+| Orchestrierung | Kubernetes |
+| Lokale Kubernetes-Umgebung | Docker Desktop |
+| Kubernetes-Konfiguration | Kustomize |
+| CI/CD | GitHub Actions |
+| Container Registry | GitHub Container Registry (GHCR) |
+| GitOps | Argo CD |
+| Image-Automatisierung | Argo CD Image Updater |
+| Versionsverwaltung | Git, GitHub |
+
+## 4. Systemarchitektur
 
 Die Anwendung ist in drei logische Ebenen unterteilt.
 
-| Ebene | Namespace | Komponenten |
+| Ebene | Komponenten | Kubernetes Namespace |
 |---|---|---|
-| Frontend | `employee-frontend` | Angular, Nginx |
-| Backend | `employee-backend` | Employee Service, Auth Service |
-| Datenbank | `employee-database` | Employee MySQL, Auth MySQL |
+| Frontend | Angular, Nginx | `employee-frontend` |
+| Backend | Employee Service, Auth Service | `employee-backend` |
+| Datenbank | Employee MySQL, Auth MySQL | `employee-database` |
 
-### 2.1 Architekturübersicht
+### Architekturübersicht
 
 ```text
                          Benutzer
                             |
                             v
-                    +---------------+
-                    |    Browser    |
-                    +---------------+
+                       Webbrowser
                             |
-                            | HTTP
                             v
-              +----------------------------+
-              |     employee-frontend      |
-              |                            |
-              | Angular Application        |
-              | Nginx Reverse Proxy        |
-              +----------------------------+
+                   Angular + Nginx
+                  employee-frontend
                             |
                  +----------+----------+
                  |                     |
                  v                     v
-       +------------------+  +------------------+
-       | Employee Service |  |   Auth Service   |
-       |     Port 8081    |  |    Port 8082     |
-       +------------------+  +------------------+
+          Employee Service       Auth Service
+             Spring Boot          Spring Boot
                  |                     |
                  v                     v
-       +------------------+  +------------------+
-       |  Employee MySQL  |  |    Auth MySQL    |
-       |     people_hub   |  | people_hub_auth  |
-       +------------------+  +------------------+
+           Employee MySQL         Auth MySQL
+             people_hub          people_hub_auth
 ```
 
-Die Kommunikation zwischen den Komponenten erfolgt über interne Kubernetes Services.
+Die Backend-Services kommunizieren jeweils mit ihrer zugeordneten MySQL-Datenbank.
 
-Der Zugriff auf die Anwendung erfolgt lokal über den Frontend-Service und Port-Forwarding.
+Die Kommunikation innerhalb der Kubernetes-Umgebung erfolgt über interne Kubernetes Services.
 
-## 3. Dokumentationsstruktur
+### Trennung der Backend-Services
 
-Die Dokumentation ist nach Themenbereichen organisiert.
+Die Anwendung verwendet zwei eigenständige Backend-Services:
 
-```text
-docs/
-│
-├── README.md
-│
-├── architecture-decisions/
-│   └── ADR-002-namespace-separation.md
-│
-├── architecture/
-│   └── system-architecture.md
-│
-├── implementation/
-│   ├── local-kubernetes-environment.md
-│   └── database-and-data-migration.md
-│
-├── security/
-│   └── security-and-network-policies.md
-│
-├── operations/
-│   ├── kubernetes-command-reference.md
-│   ├── monitoring-and-resource-management.md
-│   └── troubleshooting.md
-│
-└── aws-eks/
-    └── preparation-and-deployment-guide.md
-```
+**Employee Service**
+- Verwaltung der Mitarbeiterdaten
+- Zugriff auf die Employee-Datenbank
+- Bereitstellung der entsprechenden REST-Schnittstellen
 
-Die Dokumente haben unterschiedliche Aufgaben und ergänzen sich gegenseitig.
+**Auth Service**
+- Authentifizierung
+- Autorisierung
+- JWT-basierte Zugriffskontrolle
+- Eigenständige Auth-Datenbank
 
-## 4. Architekturentscheidungen
+---
 
-### ADR-002: Namespace Separation
+## 5. Kubernetes-Implementierung
 
-Datei:
+Die Anwendung wurde von Docker Compose auf eine lokale Kubernetes-Umgebung mit Docker Desktop migriert.
 
-`architecture-decisions/ADR-002-namespace-separation.md`
+Dabei wurde die Infrastruktur deklarativ mit Kubernetes-Manifests und Kustomize aufgebaut.
 
-Dieses Architekturentscheidungsdokument beschreibt die Aufteilung der Kubernetes-Anwendung in drei Namespaces.
+### Implementierte Kubernetes-Komponenten
 
-Es dokumentiert:
-
-- Den architektonischen Hintergrund
-- Die getroffene Entscheidung
-- Die verwendeten Namespaces
-- Die Gründe für die Trennung
-- Betrachtete Alternativen
-- Technische und sicherheitsbezogene Konsequenzen
-- Den aktuellen Implementierungsstatus
-
-## 5. Architektur
-
-### Systemarchitektur
-
-Datei:
-
-`architecture/system-architecture.md`
-
-Dieses Dokument beschreibt den technischen Aufbau der gesamten Anwendung.
-
-Dazu gehören:
-
-- Angular-Frontend und Nginx
-- Employee Service
-- Auth Service
-- Employee MySQL
-- Auth MySQL
-- Kubernetes Services und DNS
-- Kommunikation zwischen den Anwendungsschichten
-- Kustomize-Grundstruktur
-
-## 6. Implementierung
-
-### 6.1 Lokale Kubernetes-Umgebung
-
-Datei:
-
-`implementation/local-kubernetes-environment.md`
-
-Dieses Dokument beschreibt die Einrichtung und den aktuellen technischen Stand der lokalen Docker-Desktop-Kubernetes-Umgebung.
-
-Behandelt werden:
-
-- Voraussetzungen
-- Docker Desktop und WSL2
-- Kubernetes-Konfiguration
-- Namespace-Struktur
-- Deployment der Anwendung
-- Container-Images
-- Services
-- Persistent Storage
-- Health Checks
-- Ressourcenlimits
-- Kustomize
-
-### 6.2 Datenbanken und Datenmigration
-
-Datei:
-
-`implementation/database-and-data-migration.md`
-
-Dieses Dokument beschreibt die beiden MySQL-Datenbanken und die Übernahme der bestehenden Daten aus der Docker-Compose-Umgebung.
-
-Behandelt werden:
-
-- Datenbankarchitektur
+- Drei getrennte Namespaces
+- Deployments für die Anwendungskomponenten
+- Kubernetes Services für die interne Kommunikation
 - MySQL StatefulSets
-- PersistentVolumeClaims
-- StorageClass
-- Datenbankzugänge
-- Backup-Erstellung
-- SQL-Dumps
-- Datenimport
-- Datenintegrität
-- Schutz vorhandener Daten
-
-## 7. Sicherheit
-
-### Security and Network Policies
-
-Datei:
-
-`security/security-and-network-policies.md`
-
-Dieses Dokument beschreibt die grundlegenden Sicherheitsmaßnahmen der Kubernetes-Umgebung.
-
-Behandelt werden:
-
-- Namespace-Trennung
-- Kubernetes Secrets
-- Zugangsdaten
+- PersistentVolumeClaims für dauerhafte Datenspeicherung
+- ConfigMaps für Konfigurationen
+- Kubernetes Secrets für vertrauliche Werte
+- Health Checks und Kubernetes Probes
+- Resource Requests und Resource Limits
 - NetworkPolicies
-- Erlaubte Kommunikationswege
-- Spring Security und Health-Endpunkte
-- Sicherheitsgrenzen der lokalen Umgebung
-- Noch offene Sicherheitsmaßnahmen für AWS EKS
+- Kustomize Base und Docker-Desktop-Overlay
 
-## 8. Betrieb und Wartung
+### Screenshots
 
-### 8.1 Kubernetes Command Reference
+![Kubernetes Pod employee-frontend](docs/images/kubernetes_employee-frontend_pod.png)
+![Kubernetes Service employee-frontend](docs/images/kubernetes_employee-frontend_service.png)
 
-Datei:
+---
 
-`operations/kubernetes-command-reference.md`
+## 6. CI/CD mit GitHub Actions
 
-Die Befehlsreferenz enthält die wichtigsten Kubernetes-Kommandos für den täglichen Betrieb.
+Für die automatisierte Integration und Erstellung der Container-Images wurde eine CI/CD-Pipeline mit GitHub Actions implementiert.
 
-Dazu gehören:
+Die Pipeline wird bei Änderungen auf den konfigurierten Branches sowie bei Pull Requests gegen `main` ausgeführt.
 
-- Cluster- und Namespace-Verwaltung
-- Deployments und Pods
-- Services
-- Logs
-- Health Checks
-- StatefulSets
-- PersistentVolumeClaims
-- ConfigMaps und Secrets
-- Port-Forwarding
-- Kustomize
-- Metrics Server
+### Pipeline-Ablauf
 
-### 8.2 Monitoring und Ressourcenverwaltung
+1. Automatisierte Backend-Tests für Employee Service und Auth Service.
+2. Frontend-Build und Sicherheitsprüfung.
+3. Dependency Review bei Pull Requests.
+4. Docker-Build und Integrationstests mit Docker Compose.
+5. Prüfung der Health-Endpunkte aller Anwendungskomponenten.
+6. Erstellung und Veröffentlichung der Container-Images in GHCR.
 
-Datei:
+### Verwendete Images
 
-`operations/monitoring-and-resource-management.md`
-
-Dieses Dokument beschreibt die Überwachung der Kubernetes-Workloads.
-
-Behandelt werden:
-
-- Metrics Server
-- CPU- und RAM-Verbrauch
-- Resource Requests
-- Resource Limits
-- Kubernetes Probes
-- Auswertung der aktuellen Messwerte
-- Grenzen des lokalen Monitorings
-
-### 8.3 Fehleranalyse
-
-Datei:
-
-`operations/troubleshooting.md`
-
-Dieses Dokument unterstützt bei der Analyse typischer Probleme.
-
-Behandelt werden:
-
-- Pods starten nicht
-- Container werden neu gestartet
-- Image-Probleme
-- Datenbankverbindungen
-- PersistentVolumeClaims
-- Health Checks
-- Netzwerkverbindungen
-- Nginx und Frontend
-- Metrics Server
-
-## 9. AWS EKS
-
-### Vorbereitung und Bereitstellung
-
-Datei:
-
-`aws-eks/preparation-and-deployment-guide.md`
-
-Dieses Dokument beschreibt die geplante Übertragung der lokalen Kubernetes-Architektur auf AWS EKS.
-
-Behandelt werden:
-
-- Zielarchitektur
-- Amazon ECR
-- Amazon EKS
-- Persistenter Speicher mit AWS EBS
-- Load Balancer und Ingress
-- Secret-Verwaltung
-- Netzwerk- und Sicherheitskonfiguration
-- Anpassung der Kustomize-Overlays
-- Geplante Bereitstellungsschritte
-
-**Aktueller Status:** Die AWS-EKS-Umgebung wurde noch nicht eingerichtet oder getestet. Die Dokumentation beschreibt die Vorbereitung und die erforderlichen späteren Schritte.
-
-## 10. Aktueller Implementierungsstand
-
-Die folgende Übersicht unterscheidet zwischen lokal umgesetzten Funktionen und zukünftigen Arbeiten.
-
-| Bereich | Status |
+| Komponente | Image |
 |---|---|
-| Docker-Desktop-Kubernetes | Implementiert |
-| Namespace-Trennung | Implementiert |
-| Frontend mit Nginx | Implementiert |
-| Employee Service | Implementiert |
-| Auth Service | Implementiert |
-| Employee MySQL | Implementiert |
-| Auth MySQL | Implementiert |
-| Datenmigration | Durchgeführt |
-| PersistentVolumeClaims | Implementiert |
-| Kubernetes Secrets | Implementiert |
-| NetworkPolicies | Erstellt und angewendet |
-| Health Checks | Implementiert und geprüft |
-| Resource Requests und Limits | Implementiert |
-| Metrics Server | Installiert und funktionsfähig |
-| Kustomize Base | Implementiert |
-| Docker-Desktop-Overlay | Implementiert |
-| AWS-EKS-Overlay | Grundgerüst vorhanden |
-| AWS-EKS-Bereitstellung | Ausstehend |
-| Funktionale Negativtests der NetworkPolicies | Ausstehend |
-| Produktionsgeeignete AWS-Sicherheitskonfiguration | Ausstehend |
+| Frontend | `ghcr.io/sedatbicer/employee-frontend` |
+| Employee Service | `ghcr.io/sedatbicer/employee-service` |
+| Auth Service | `ghcr.io/sedatbicer/auth-service` |
 
-## 11. Dokumentationsgrundsätze
+Die Images werden mit Commit-basierten SHA-Tags veröffentlicht. Dadurch ist jeder Container eindeutig einem Quellcode-Stand zugeordnet.
 
-Die Dokumentation orientiert sich am tatsächlich implementierten Projektstand.
+### Screenshot
 
-Dabei gelten folgende Grundsätze:
+![Erfolgreiche CI/CD-Pipeline](docs/images/github_actions_ci_cd_success.png)
 
-1. Implementierte Funktionen werden als umgesetzt dokumentiert.
-2. Erfolgreich geprüfte Funktionen werden als geprüft gekennzeichnet.
-3. Nicht durchgeführte Tests werden nicht als erfolgreich dargestellt.
-4. Noch nicht implementierte Funktionen werden als offen oder geplant gekennzeichnet.
-5. Zugangsdaten und vertrauliche Werte werden niemals im Klartext dokumentiert.
-6. Änderungen an persistenten Datenbankressourcen müssen mit besonderer Vorsicht behandelt werden.
-7. Lokale Docker-Desktop-Besonderheiten werden von produktiven AWS-EKS-Anforderungen getrennt.
+---
 
-## 12. Ziel der Dokumentation
+## 7. GitOps mit Argo CD
 
-Die Dokumentation soll eine nachvollziehbare technische Grundlage für die weitere Entwicklung und den Betrieb des Employee-Management-Systems bilden.
+Für die deklarative Verwaltung der Kubernetes-Ressourcen wurde Argo CD eingerichtet.
 
-Sie ermöglicht:
+Argo CD überwacht das Git-Repository und synchronisiert den gewünschten Zustand der Anwendung mit dem tatsächlichen Zustand des Kubernetes-Clusters.
 
-- Das Verständnis der Gesamtarchitektur
-- Die nachvollziehbare Verwaltung der Kubernetes-Ressourcen
-- Die Wartung und Fehleranalyse
-- Die sichere Verwaltung der Datenbanken
-- Die Überprüfung der aktuellen Implementierung
-- Die spätere Vorbereitung der AWS-EKS-Bereitstellung
+Es wurden zwei Argo CD Applications eingerichtet:
 
-Die Dokumentation wird bei wesentlichen Änderungen an Architektur, Implementierung oder Betriebsabläufen aktualisiert.
+| Application | Aufgabe |
+|---|---|
+| `employee-management-local` | Bereitstellung der Anwendung |
+| `employee-management-platform` | Verwaltung der Image-Updater- und Registry-Konfiguration |
+
+Die Anwendungskonfiguration wird über Kustomize verwaltet.
+
+Die Synchronisierung der lokalen Anwendung erfolgt automatisch über Argo CD Auto-Sync.
+
+### Automatische Image-Aktualisierung
+
+Zusätzlich wurde Argo CD Image Updater installiert und konfiguriert.
+
+Die Komponente überwacht die drei Container-Images in GHCR und erkennt neue Images anhand des definierten SHA-Tag-Schemas.
+
+Der Ablauf:
+
+1. GitHub Actions veröffentlicht neue Container-Images.
+2. Argo CD Image Updater erkennt die neuen Image-Tags.
+3. Die aktualisierten Tags werden in die Kustomize-Konfiguration zurückgeschrieben.
+4. Die Änderung wird automatisch in das Git-Repository übernommen.
+5. Argo CD erkennt die Änderung und synchronisiert die Kubernetes-Ressourcen.
+6. Kubernetes startet die Anwendung mit den neuen Container-Images.
+
+Damit ist ein automatisierter Ablauf von der Codeänderung bis zur Aktualisierung der Kubernetes-Anwendung umgesetzt.
+
+### Screenshots
+
+![Argo CD Applications – Synced und Healthy](docs/images/argocd_applications_synced_healthy.png)
+
+
+
+---
+
+## 8. Sicherheit und Zugangsdaten
+
+Bei der Implementierung wurden verschiedene Sicherheitsmaßnahmen berücksichtigt.
+
+- Getrennte Kubernetes Namespaces
+- JWT-basierte Authentifizierung
+- Kubernetes Secrets für vertrauliche Konfigurationswerte
+- Separate Zugangsdaten für GHCR und Git Write-back
+- Read-only Git-Zugriff für Argo CD
+- Separater Registry-Zugriff für Image Updater
+- NetworkPolicies zur Einschränkung der Netzwerkkommunikation
+- Keine Zugangsdaten oder Tokens im Git-Repository
+
+Die Registry-Zugriffe und Git-Zugangsdaten werden derzeit über manuell angelegte Kubernetes Secrets verwaltet.
+
+Eine spätere Erweiterung um Sealed Secrets ist vorgesehen.
+
+---
+
+## 9. Projektstatus und nächste Schritte
+
+### Implementiert und getestet
+
+- Full-Stack-Anwendung mit Angular und Spring Boot
+- Getrennte Employee- und Auth-Services
+- Zwei eigenständige MySQL-Datenbanken
+- Containerisierung mit Docker
+- Lokale Kubernetes-Umgebung mit Docker Desktop
+- Namespace-Trennung und persistenter Speicher
+- GitHub Actions CI/CD-Pipeline
+- Automatisierte Backend- und Frontend-Prüfungen
+- Docker-Integrationstests
+- Veröffentlichung der drei Container-Images in GHCR
+- GitOps mit Argo CD
+- Automatische Image-Aktualisierung mit Argo CD Image Updater
+- Automatische Synchronisierung der Kubernetes-Konfiguration
+
+### Geplante Erweiterungen
+
+- Verschlüsselte Secret-Verwaltung mit Sealed Secrets
+- Funktionale Negativtests der NetworkPolicies
+- Übertragung der Infrastruktur auf AWS EKS
+- AWS-spezifische Netzwerk- und Sicherheitskonfiguration
+- Produktionsorientiertes Monitoring
+
+**Hinweis:** AWS EKS befindet sich derzeit in der Vorbereitung und wurde noch nicht deployt oder funktional getestet.
+
+---
+
+## 10. Weiterführende Dokumentation
+
+Eine ausführliche technische Dokumentation mit Architekturentscheidungen, Implementierungsdetails, Kubernetes-Konfigurationen und Betriebsanleitungen befindet sich im Ordner:
+
+**[Technische Dokumentation – docs/kubernetes](docs/kubernetes/README.md)**
+
+Dort werden unter anderem die lokale Kubernetes-Umgebung, die CI/CD-Pipeline, die GitOps-Architektur und die geplante AWS-EKS-Bereitstellung detailliert beschrieben.
+
+---
+
+## 11. Projektziel
+
+Das Projekt verbindet die Entwicklung einer Full-Stack-Anwendung mit dem praktischen Aufbau einer containerisierten und automatisiert bereitgestellten Infrastruktur.
+
+Der Schwerpunkt liegt auf der Kombination aus Softwareentwicklung, Containerisierung, Kubernetes-Orchestrierung, CI/CD und GitOps.
+
+Die Implementierung zeigt den durchgängigen technischen Ablauf von der Entwicklung und automatisierten Prüfung des Quellcodes bis zur Bereitstellung und Aktualisierung der Anwendung in Kubernetes.
