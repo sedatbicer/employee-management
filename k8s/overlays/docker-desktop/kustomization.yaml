@@ -26,13 +26,13 @@ resources:
 images:
   - name: employee-frontend
     newName: ghcr.io/sedatbicer/employee-frontend
-    newTag: sha-94a38a972b8b28f76ae00c9728bc1697d7e4a686
+    newTag: sha-c94e4a4aee3bfdf62ea5aed24f259698bc9d29b0
   - name: employee-service
     newName: ghcr.io/sedatbicer/employee-service
-    newTag: sha-bf15955cb5f59794a572aceb8c09ee9d5b234351
+    newTag: sha-c94e4a4aee3bfdf62ea5aed24f259698bc9d29b0
   - name: auth-service
     newName: ghcr.io/sedatbicer/auth-service
-    newTag: sha-bd690e2f8bad0dcdefe8e299a0d8f5cd2f0d6f92
+    newTag: sha-c94e4a4aee3bfdf62ea5aed24f259698bc9d29b0
 
 # Image-Pull-Secret für alle drei Anwendungsdeployments konfigurieren.
 patches:
