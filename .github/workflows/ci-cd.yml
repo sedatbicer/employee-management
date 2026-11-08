@@ -36,6 +36,9 @@ on:
     branches:
       - main
       - ci-cd-pipeline
+    paths-ignore:
+      # Automatische Image-Tag-Updates sollen keinen neuen CI/CD-Lauf auslösen.
+      - 'k8s/overlays/docker-desktop/kustomization.yaml'      
 
   # Pull Requests gegen main automatisch überprüfen.
   pull_request:
