@@ -1,0 +1,77 @@
+# =============================================================================
+# Employee Management - Argo CD Platform Application
+# =============================================================================
+#
+# Zweck:
+# Erstellt eine separate Argo-CD-Application für die Verwaltung
+# der Plattformkonfiguration des Employee-Management-Projekts.
+#
+# Verwaltete Komponenten:
+# - Argo CD Image Updater ConfigMap
+# - ImageUpdater Custom Resource
+#
+# Git Repository:
+# sedatbicer/employee-management
+#
+# Git Branch:
+# ci-cd-pipeline
+#
+# Git Pfad:
+# platform/image-updater
+#
+# Namespace:
+# argocd
+#
+# GitOps:
+# Argo CD überwacht den definierten Git-Pfad und synchronisiert
+# Änderungen automatisch mit dem Kubernetes-Cluster.
+#
+# Sicherheit:
+# Kubernetes Secrets mit Zugangsdaten werden nicht über diese Application
+# verwaltet und verbleiben zunächst separat im Cluster.
+#
+# Hinweis:
+# Diese Application muss einmalig manuell erstellt werden.
+# Danach übernimmt Argo CD die weitere Verwaltung der enthaltenen Ressourcen.
+#
+# =============================================================================
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: employee-management-platform
+  namespace: argocd
+
+spec:
+
+  # Argo-CD-Projekt, dem diese Application zugeordnet ist.
+  project: default
+
+  # ---------------------------------------------------------------------------
+  # Git Quelle
+  # ---------------------------------------------------------------------------
+  source:
+    repoURL: git@github.com:sedatbicer/employee-management.git
+    targetRevision: ci-cd-pipeline
+    path: platform/image-updater
+
+  # ---------------------------------------------------------------------------
+  # Kubernetes Ziel
+  # ---------------------------------------------------------------------------
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  # ---------------------------------------------------------------------------
+  # Automatische Synchronisierung
+  # ---------------------------------------------------------------------------
+  syncPolicy:
+    automated:
+
+      # Nicht mehr in Git vorhandene Ressourcen werden nicht automatisch
+      # aus dem Cluster gelöscht.
+      prune: false
+
+      # Änderungen außerhalb von Git werden nicht automatisch überschrieben.
+      selfHeal: false

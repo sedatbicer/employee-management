@@ -1,0 +1,29 @@
+# =============================================================================
+# Employee Management - Image Updater Kustomization
+# =============================================================================
+#
+# Zweck:
+# Bündelt alle Kubernetes-Ressourcen, die für die Konfiguration des
+# Argo CD Image Updaters benötigt werden.
+#
+# Enthaltene Ressourcen:
+# - configmap.yaml:
+#   Konfiguration der Container Registry (GitHub Container Registry).
+#
+# - image-updater.yaml:
+#   ImageUpdater-Ressource mit den zu überwachenden Anwendungsimages
+#   und der Git-Write-back-Konfiguration.
+#
+# Verwaltung:
+# Diese Ressourcen werden später durch eine eigene Argo-CD-Application
+# aus diesem Git-Verzeichnis synchronisiert.
+#
+# =============================================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Alle Ressourcen, die zu dieser Kustomize-Konfiguration gehören.
+resources:
+  - configmap.yaml
+  - image-updater.yaml

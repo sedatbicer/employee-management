@@ -1,0 +1,45 @@
+# =============================================================================
+# Employee Management - Argo CD Image Updater Registry Configuration
+# =============================================================================
+#
+# Zweck:
+# Stellt die Registry-Konfiguration für den Argo CD Image Updater bereit.
+#
+# Container Registry:
+# GitHub Container Registry (GHCR)
+# https://ghcr.io
+#
+# Authentifizierung:
+# Der Image Updater verwendet das Kubernetes-Secret ghcr-image-updater.
+# Das Secret enthält die Zugangsdaten für den Zugriff auf private GHCR-Images.
+#
+# Sicherheit:
+# Zugangsdaten werden bewusst nicht in dieser ConfigMap gespeichert.
+# Sie werden separat als Kubernetes Secret im Namespace argocd verwaltet.
+#
+# Namespace:
+# argocd
+#
+# =============================================================================
+
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: argocd-image-updater-config
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd-image-updater
+
+data:
+  # Registry-Konfiguration für den Argo CD Image Updater.
+  registries.conf: |
+    registries:
+      # GitHub Container Registry als Image-Quelle registrieren.
+      - name: GitHub Container Registry
+        prefix: ghcr.io
+        api_url: https://ghcr.io
+
+        # Zugangsdaten aus einem Kubernetes Secret laden.
+        # Das Secret enthält den Schlüssel "creds".
+        credentials: secret:argocd/ghcr-image-updater#creds

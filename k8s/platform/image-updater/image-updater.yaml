@@ -1,0 +1,135 @@
+# =============================================================================
+# Employee Management - Argo CD Image Updater
+# =============================================================================
+#
+# Zweck:
+# Überwacht die Container-Images der Employee-Management-Anwendung
+# in der GitHub Container Registry und aktualisiert die Image-Tags
+# automatisch, sobald ein neuer passender Build verfügbar ist.
+#
+# Überwachte Images:
+# - employee-frontend
+# - employee-service
+# - auth-service
+#
+# Update-Strategie:
+# newest-build
+#
+# Es werden ausschließlich Tags akzeptiert, die dem folgenden Muster
+# entsprechen:
+# sha-<40-stellige Git-Commit-SHA>
+#
+# Git-Integration:
+# Aktualisierte Image-Tags werden automatisch in den Branch
+# ci-cd-pipeline zurückgeschrieben.
+#
+# Authentifizierung:
+# Der Git-Zugriff erfolgt über das Kubernetes Secret
+# git-writeback-credentials im Namespace argocd.
+#
+# Sicherheit:
+# Zugangsdaten und Tokens werden nicht in dieser Datei gespeichert.
+#
+# =============================================================================
+
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+
+metadata:
+  name: employee-management-updater
+  namespace: argocd
+
+spec:
+
+  # ---------------------------------------------------------------------------
+  # Git Write-back Konfiguration
+  # ---------------------------------------------------------------------------
+  # Der Image Updater schreibt erkannte Image-Updates direkt in das Git-Repo.
+  # Die Zugangsdaten werden aus einem Kubernetes Secret gelesen.
+
+  writeBackConfig:
+    method: "git:secret:argocd/git-writeback-credentials"
+
+    gitConfig:
+      # GitHub Repository, in dem die Kubernetes-Manifeste liegen.
+      repository: "https://github.com/sedatbicer/employee-management.git"
+
+      # Branch, den Argo CD für die lokale Docker-Desktop-Umgebung überwacht.
+      branch: "ci-cd-pipeline"
+
+      # Image-Änderungen werden in der Kustomize-Konfiguration gespeichert.
+      writeBackTarget: "kustomization"
+
+  # ---------------------------------------------------------------------------
+  # Argo CD Application und zu überwachende Container-Images
+  # ---------------------------------------------------------------------------
+  # Der Image Updater arbeitet mit der bereits vorhandenen Argo-CD-Application
+  # employee-management-local zusammen.
+
+  applicationRefs:
+    - namePattern: "employee-management-local"
+
+      images:
+
+        # ---------------------------------------------------------------------
+        # Frontend
+        # ---------------------------------------------------------------------
+        - alias: "frontend"
+
+          # Aktuell verwendetes GHCR-Image mit Commit-SHA-Tag.
+          imageName: "ghcr.io/sedatbicer/employee-frontend:sha-bd690e2f8bad0dcdefe8e299a0d8f5cd2f0d6f92"
+
+          # Name des Images, wie es in der Kustomize-Konfiguration
+          # referenziert wird.
+          manifestTargets:
+            kustomize:
+              name: "employee-frontend"
+
+          commonUpdateSettings:
+            # Neueste passende Image-Version anhand des Build-Zeitpunkts wählen.
+            updateStrategy: "newest-build"
+
+            # Nur Tags mit einer vollständigen 40-stelligen Commit-SHA zulassen.
+            allowTags: "regexp:^sha-[a-f0-9]{40}$"
+
+        # ---------------------------------------------------------------------
+        # Employee Backend Service
+        # ---------------------------------------------------------------------
+        - alias: "employee"
+
+          # Aktuell verwendetes GHCR-Image mit Commit-SHA-Tag.
+          imageName: "ghcr.io/sedatbicer/employee-service:sha-bd690e2f8bad0dcdefe8e299a0d8f5cd2f0d6f92"
+
+          # Name des Images, wie es in der Kustomize-Konfiguration
+          # referenziert wird.
+          manifestTargets:
+            kustomize:
+              name: "employee-service"
+
+          commonUpdateSettings:
+            # Neueste passende Image-Version anhand des Build-Zeitpunkts wählen.
+            updateStrategy: "newest-build"
+
+            # Nur Tags mit einer vollständigen 40-stelligen Commit-SHA zulassen.
+            allowTags: "regexp:^sha-[a-f0-9]{40}$"
+
+        # ---------------------------------------------------------------------
+        # Auth Backend Service
+        # ---------------------------------------------------------------------
+        - alias: "auth"
+
+          # Aktuell verwendetes GHCR-Image mit Commit-SHA-Tag.
+          imageName: "ghcr.io/sedatbicer/auth-service:sha-bd690e2f8bad0dcdefe8e299a0d8f5cd2f0d6f92"
+
+          # Name des Images, wie es in der Kustomize-Konfiguration
+          # referenziert wird.
+          manifestTargets:
+            kustomize:
+              name: "auth-service"
+
+          commonUpdateSettings:
+            # Neueste passende Image-Version anhand des Build-Zeitpunkts wählen.
+            updateStrategy: "newest-build"
+
+            # Nur Tags mit einer vollständigen 40-stelligen Commit-SHA zulassen.
+            allowTags: "regexp:^sha-[a-f0-9]{40}$"
