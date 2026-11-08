@@ -26,7 +26,7 @@ resources:
 images:
   - name: employee-frontend
     newName: ghcr.io/sedatbicer/employee-frontend
-    newTag: sha-986c440ff62196d0c761f0312ffba5992f57793d
+    newTag: sha-b2ca4e938ce37edb07456c8217def618d720e601
   - name: employee-service
     newName: ghcr.io/sedatbicer/employee-service
     newTag: sha-bf15955cb5f59794a572aceb8c09ee9d5b234351
