@@ -6,6 +6,7 @@ Ein Full-Stack-Projekt zur Verwaltung von Mitarbeitern mit rollenbasierter Authe
 
 Neben der Anwendungsentwicklung lag der Schwerpunkt auf dem Aufbau einer automatisierten CI/CD-Pipeline und einer GitOps-basierten Bereitstellung mit Kubernetes, Argo CD und Argo CD Image Updater.
 
+---
 
 ## 1. Projektübersicht
 
@@ -19,33 +20,35 @@ Die Anwendung wurde zunächst mit Docker Compose betrieben und anschließend in 
 
 Darauf aufbauend wurde eine automatisierte CI/CD- und GitOps-Architektur implementiert.
 
+---
+
 ## 2. Screenshots der Anwendung
 
-
 ### Login
-![Login-Seite](docs/images/login.png)
+
+![Login-Seite](images/login.png)
 
 ### Mitarbeiterverwaltung
 
-![Mitarbeiterliste](docs/images/employee_list.png)
+![Mitarbeiterliste](images/employee_list.png)
 
-![Mitarbeiterliste mit Pagination](docs/images/employee_list_pagination.png)
+![Mitarbeiterliste mit Pagination](images/employee_list_pagination.png)
 
 ### Neuen Mitarbeiter anlegen
 
-![Neuen Mitarbeiter anlegen](docs/images/employee_create.png)
+![Neuen Mitarbeiter anlegen](images/employee_create.png)
 
 ### Mitarbeiter bearbeiten
 
-![Mitarbeiter bearbeiten](docs/images/employee_edit.png)
+![Mitarbeiter bearbeiten](images/employee_edit.png)
 
 ### Mitarbeiter löschen
 
-![Mitarbeiter bearbeiten](docs/images/employee_delete.png)
+![Mitarbeiter löschen](images/employee_delete.png)
 
+---
 
 ## 3. Technologiestack
-## Technologiestack
 
 | Bereich | Technologie |
 |---|---|
@@ -64,6 +67,8 @@ Darauf aufbauend wurde eine automatisierte CI/CD- und GitOps-Architektur impleme
 | GitOps | Argo CD |
 | Image-Automatisierung | Argo CD Image Updater |
 | Versionsverwaltung | Git, GitHub |
+
+---
 
 ## 4. Systemarchitektur
 
@@ -95,7 +100,7 @@ Die Anwendung ist in drei logische Ebenen unterteilt.
                  |                     |
                  v                     v
            Employee MySQL         Auth MySQL
-             people_hub          people_hub_auth
+            people_hub          people_hub_auth
 ```
 
 Die Backend-Services kommunizieren jeweils mit ihrer zugeordneten MySQL-Datenbank.
@@ -107,11 +112,13 @@ Die Kommunikation innerhalb der Kubernetes-Umgebung erfolgt über interne Kubern
 Die Anwendung verwendet zwei eigenständige Backend-Services:
 
 **Employee Service**
+
 - Verwaltung der Mitarbeiterdaten
 - Zugriff auf die Employee-Datenbank
 - Bereitstellung der entsprechenden REST-Schnittstellen
 
 **Auth Service**
+
 - Authentifizierung
 - Autorisierung
 - JWT-basierte Zugriffskontrolle
@@ -141,8 +148,13 @@ Dabei wurde die Infrastruktur deklarativ mit Kubernetes-Manifests und Kustomize 
 
 ### Screenshots
 
-![Kubernetes Pod employee-frontend](docs/images/kubernetes_employee-frontend_pod.png)
-![Kubernetes Service employee-frontend](docs/images/kubernetes_employee-frontend_service.png)
+**Kubernetes Pod – Employee Frontend**
+
+![Kubernetes Pod employee-frontend](images/kubernetes_employee-frontend_pod.png)
+
+**Kubernetes Service – Employee Frontend**
+
+![Kubernetes Service employee-frontend](images/kubernetes_employee-frontend_service.png)
 
 ---
 
@@ -171,9 +183,9 @@ Die Pipeline wird bei Änderungen auf den konfigurierten Branches sowie bei Pull
 
 Die Images werden mit Commit-basierten SHA-Tags veröffentlicht. Dadurch ist jeder Container eindeutig einem Quellcode-Stand zugeordnet.
 
-### Screenshot
+### Screenshot – Erfolgreiche CI/CD-Pipeline
 
-![Erfolgreiche CI/CD-Pipeline](docs/images/github_actions_ci_cd_success.png)
+![Erfolgreiche CI/CD-Pipeline](images/github_actions_ci_cd_success.png)
 
 ---
 
@@ -211,11 +223,9 @@ Der Ablauf:
 
 Damit ist ein automatisierter Ablauf von der Codeänderung bis zur Aktualisierung der Kubernetes-Anwendung umgesetzt.
 
-### Screenshots
+### Screenshot – Argo CD
 
-![Argo CD Applications – Synced und Healthy](docs/images/argocd_applications_synced_healthy.png)
-
-
+![Argo CD Applications – Synced und Healthy](images/argocd_applications_synced_healthy.png)
 
 ---
 
@@ -272,7 +282,7 @@ Eine spätere Erweiterung um Sealed Secrets ist vorgesehen.
 
 Eine ausführliche technische Dokumentation mit Architekturentscheidungen, Implementierungsdetails, Kubernetes-Konfigurationen und Betriebsanleitungen befindet sich im Ordner:
 
-**[Technische Dokumentation – docs/kubernetes](docs/kubernetes/README.md)**
+**[Technische Dokumentation – Kubernetes, CI/CD und GitOps](kubernetes/README.md)**
 
 Dort werden unter anderem die lokale Kubernetes-Umgebung, die CI/CD-Pipeline, die GitOps-Architektur und die geplante AWS-EKS-Bereitstellung detailliert beschrieben.
 
