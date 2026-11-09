@@ -92,15 +92,15 @@ Die Anwendung ist in drei logische Ebenen unterteilt.
                    Angular + Nginx
                   employee-frontend
                             |
-                 +----------+----------+
-                 |                     |
-                 v                     v
-          Employee Service       Auth Service
-             Spring Boot          Spring Boot
-                 |                     |
-                 v                     v
-           Employee MySQL         Auth MySQL
-            people_hub          people_hub_auth
+                +-----------+-----------+
+                |                       |
+                v                       v
+          Employee Service        Auth Service
+            Spring Boot            Spring Boot
+                |                       |
+                v                       v
+          Employee MySQL           Auth MySQL
+           people_hub             people_hub_auth
 ```
 
 Die Backend-Services kommunizieren jeweils mit ihrer zugeordneten MySQL-Datenbank.
@@ -126,7 +126,82 @@ Die Anwendung verwendet zwei eigenständige Backend-Services:
 
 ---
 
-## 5. Kubernetes-Implementierung
+## 5. Datenbanken und Datenmodell
+
+Die Anwendung verwendet zwei getrennte MySQL-Datenbanken. Jeder Backend-Microservice verwaltet seine eigenen Daten und Tabellen.
+
+Durch diese Trennung werden die Verantwortlichkeiten der beiden Services klar voneinander abgegrenzt.
+
+### 5.1 Employee Service – Datenbank `people_hub`
+
+Der Employee Service verwendet die Datenbank `people_hub`.
+
+Die Mitarbeiterdaten werden in der Tabelle `employees` gespeichert.
+
+**Tabelle: `employees`**
+
+| Spalte | Datentyp | Eigenschaften | Beschreibung |
+|---|---|---|---|
+| `id` | VARCHAR(20) | Primary Key, NOT NULL | Eindeutige Mitarbeiter-ID |
+| `first_name` | VARCHAR(255) | NOT NULL | Vorname |
+| `last_name` | VARCHAR(255) | NOT NULL | Nachname |
+| `email` | VARCHAR(255) | NOT NULL, UNIQUE | E-Mail-Adresse |
+| `department` | VARCHAR(255) | NULL | Abteilung |
+| `role` | VARCHAR(255) | NULL | Position oder Rolle |
+| `location` | VARCHAR(255) | NULL | Standort |
+| `start_date` | DATE | NULL | Eintrittsdatum |
+| `status` | VARCHAR(255) | NOT NULL | Beschäftigungsstatus |
+
+**Besonderheiten:**
+
+- Die Mitarbeiter-ID wird durch die Anwendung vergeben.
+- Die E-Mail-Adresse muss eindeutig sein.
+- Vorname, Nachname, E-Mail-Adresse und Status sind Pflichtfelder.
+- Das Eintrittsdatum wird als `LocalDate` verarbeitet.
+- Die Datenbankstruktur wird über JPA/Hibernate abgebildet.
+
+### 5.2 Auth Service – Datenbank `people_hub_auth`
+
+Der Auth Service verwendet eine separate Datenbank mit dem Namen `people_hub_auth`.
+
+Die Benutzerkonten werden in der Tabelle `app_users` gespeichert.
+
+**Tabelle: `app_users`**
+
+| Spalte | Datentyp | Eigenschaften | Beschreibung |
+|---|---|---|---|
+| `id` | BIGINT | Primary Key, AUTO_INCREMENT | Eindeutige Benutzer-ID |
+| `email` | VARCHAR(255) | NOT NULL, UNIQUE | E-Mail-Adresse |
+| `password_hash` | VARCHAR(255) | NOT NULL | Gehashter Passwortwert |
+| `role` | VARCHAR(20) | NOT NULL | Benutzerrolle |
+| `enabled` | BOOLEAN | NOT NULL | Benutzerkonto aktiviert |
+| `created_at` | TIMESTAMP | NOT NULL | Zeitpunkt der Erstellung |
+
+**Besonderheiten:**
+
+- Die Benutzer-ID wird automatisch durch die Datenbank generiert.
+- Die E-Mail-Adresse ist eindeutig.
+- Passwörter werden nicht im Klartext gespeichert, sondern mit einem Password Encoder gehasht.
+- Die E-Mail-Adresse wird vor dem Speichern normalisiert (Leerzeichen entfernen und Kleinschreibung).
+- Das Erstellungsdatum wird automatisch beim Anlegen eines neuen Benutzers gesetzt.
+- Der Auth Service kann beim Start einen initialen Administrator-Benutzer anlegen, sofern dieser noch nicht existiert.
+
+### 5.3 Trennung der Datenbanken
+
+Die beiden Datenbanken werden unabhängig voneinander durch ihre jeweiligen Microservices verwaltet.
+
+| Service | Datenbank | Tabelle |
+|---|---|---|
+| Employee Service | `people_hub` | `employees` |
+| Auth Service | `people_hub_auth` | `app_users` |
+
+Zwischen den Tabellen besteht keine direkte relationale Fremdschlüsselbeziehung.
+
+Die Trennung unterstützt die unabhängige Entwicklung und Verantwortlichkeit der Microservices. Jeder Service besitzt die Kontrolle über seine eigenen Daten und Datenbankstrukturen.
+
+---
+
+## 6. Kubernetes-Implementierung
 
 Die Anwendung wurde von Docker Compose auf eine lokale Kubernetes-Umgebung mit Docker Desktop migriert.
 
@@ -158,7 +233,7 @@ Dabei wurde die Infrastruktur deklarativ mit Kubernetes-Manifests und Kustomize 
 
 ---
 
-## 6. CI/CD mit GitHub Actions
+## 7. CI/CD mit GitHub Actions
 
 Für die automatisierte Integration und Erstellung der Container-Images wurde eine CI/CD-Pipeline mit GitHub Actions implementiert.
 
@@ -189,7 +264,7 @@ Die Images werden mit Commit-basierten SHA-Tags veröffentlicht. Dadurch ist jed
 
 ---
 
-## 7. GitOps mit Argo CD
+## 8. GitOps mit Argo CD
 
 Für die deklarative Verwaltung der Kubernetes-Ressourcen wurde Argo CD eingerichtet.
 
@@ -229,7 +304,7 @@ Damit ist ein automatisierter Ablauf von der Codeänderung bis zur Aktualisierun
 
 ---
 
-## 8. Sicherheit und Zugangsdaten
+## 9. Sicherheit und Zugangsdaten
 
 Bei der Implementierung wurden verschiedene Sicherheitsmaßnahmen berücksichtigt.
 
@@ -248,13 +323,16 @@ Eine spätere Erweiterung um Sealed Secrets ist vorgesehen.
 
 ---
 
-## 9. Projektstatus und nächste Schritte
+## 10. Projektstatus und nächste Schritte
 
 ### Implementiert und getestet
 
 - Full-Stack-Anwendung mit Angular und Spring Boot
 - Getrennte Employee- und Auth-Services
 - Zwei eigenständige MySQL-Datenbanken
+- Datenmodelle für Mitarbeiter und Benutzerkonten
+- Eindeutige E-Mail-Adressen in beiden Datenbanken
+- Passwort-Hashing im Auth Service
 - Containerisierung mit Docker
 - Lokale Kubernetes-Umgebung mit Docker Desktop
 - Namespace-Trennung und persistenter Speicher
@@ -278,7 +356,7 @@ Eine spätere Erweiterung um Sealed Secrets ist vorgesehen.
 
 ---
 
-## 10. Weiterführende Dokumentation
+## 11. Weiterführende Dokumentation
 
 Eine ausführliche technische Dokumentation mit Architekturentscheidungen, Implementierungsdetails, Kubernetes-Konfigurationen und Betriebsanleitungen befindet sich im Ordner:
 
@@ -288,7 +366,7 @@ Dort werden unter anderem die lokale Kubernetes-Umgebung, die CI/CD-Pipeline, di
 
 ---
 
-## 11. Projektziel
+## 12. Projektziel
 
 Das Projekt verbindet die Entwicklung einer Full-Stack-Anwendung mit dem praktischen Aufbau einer containerisierten und automatisiert bereitgestellten Infrastruktur.
 
